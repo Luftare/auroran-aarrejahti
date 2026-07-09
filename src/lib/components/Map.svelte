@@ -92,13 +92,13 @@
 
 <div class="circle">
 	<div class="map" bind:this={container}></div>
-	<div class="controls">
-		{#if panned && playerLat != null}
-			<button class="ctrl" onclick={recenter} aria-label={fi.recenter}>◎</button>
-		{/if}
-		<button class="ctrl" onclick={() => map?.zoomIn()} aria-label={fi.zoomIn}>+</button>
-		<button class="ctrl" onclick={() => map?.zoomOut()} aria-label={fi.zoomOut}>−</button>
-	</div>
+	<!-- Painikkeet kaartuvat kartan oikeaan reunaan ympyrän kehää pitkin,
+	     jokainen yhtä kaukana kartan reunasta. -->
+	{#if panned && playerLat != null}
+		<button class="ctrl" style="--angle: -42deg" onclick={recenter} aria-label={fi.recenter}>◎</button>
+	{/if}
+	<button class="ctrl" style="--angle: -14deg" onclick={() => map?.zoomIn()} aria-label={fi.zoomIn}>+</button>
+	<button class="ctrl" style="--angle: 14deg" onclick={() => map?.zoomOut()} aria-label={fi.zoomOut}>−</button>
 </div>
 
 <style>
@@ -121,17 +121,15 @@
 		inset: 0;
 	}
 
-	.controls {
-		position: absolute;
-		right: 12%;
-		bottom: 8%;
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-		z-index: 5;
-	}
-
+	/* Kulma 0° osoittaa suoraan oikealle; painikkeen keskipiste kiertää
+	   ympyrää, jonka säde on 41 % kartan halkaisijasta — reunaan jää siis
+	   aina sama 9 %:n väli. */
 	.ctrl {
+		position: absolute;
+		left: calc(50% + 41% * cos(var(--angle)));
+		top: calc(50% + 41% * sin(var(--angle)));
+		transform: translate(-50%, -50%);
+		z-index: 5;
 		width: 42px;
 		height: 42px;
 		border-radius: 50%;

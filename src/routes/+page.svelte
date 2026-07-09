@@ -156,21 +156,31 @@
 			<span class="status-item gold" title={fi.coins}>🪙 {session.me?.coins ?? 0}</span>
 		</header>
 
-		{#if mode === 'chest' && activeChestId}
+		{#if geo.status === 'denied' || geo.status === 'unavailable'}
+			<!-- Peliin ei pääse ilman sijaintia -->
+			<div class="circle-placeholder">
+				<span class="placeholder-icon">📍</span>
+				<p><strong>{fi.locationNeeded}</strong></p>
+				<p class="muted">
+					{geo.status === 'denied' ? fi.locationDenied : fi.locationUnavailable}
+				</p>
+				<button class="btn" onclick={() => location.reload()}>{fi.retry}</button>
+			</div>
+		{:else if geo.status !== 'ok'}
+			<!-- Karttaa ei näytetä ennen kuin sijainti on löytynyt -->
+			<div class="circle-placeholder">
+				<span class="spinner" aria-hidden="true"></span>
+				<p>{fi.locating}</p>
+			</div>
+		{:else if mode === 'chest' && activeChestId}
 			<ChestView chestId={activeChestId} {onlooted} onback={backToMap} />
 		{:else}
 			<Map {chests} playerLat={geo.lat} playerLng={geo.lng} accuracy={geo.accuracy} />
 		{/if}
 
-		{#if mode === 'map'}
+		{#if mode === 'map' && geo.status === 'ok'}
 			<section class="card action">
-				{#if geo.status === 'denied'}
-					{fi.locationDenied}
-				{:else if geo.status === 'locating' || geo.status === 'idle'}
-					{fi.locating}
-				{:else if geo.status === 'unavailable'}
-					{fi.locationUnavailable}
-				{:else if chests.length === 0}
+				{#if chests.length === 0}
 					{fi.noChestsToday}
 				{:else if !nearest}
 					{fi.allLooted}
@@ -266,6 +276,42 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	/* Ympyräalueen paikanhaku- ja virhetila kartan tilalla */
+	.circle-placeholder {
+		width: min(90vw, 420px);
+		aspect-ratio: 1;
+		margin: 0 auto;
+		border-radius: 50%;
+		border: 3px solid var(--border);
+		background: var(--bg-raised);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		text-align: center;
+		padding: 2.5rem;
+		box-shadow: var(--shadow);
+	}
+
+	.circle-placeholder p { margin: 0; }
+	.circle-placeholder .btn { margin-top: 0.8rem; }
+	.placeholder-icon { font-size: 2.2rem; }
+
+	.spinner {
+		width: 44px;
+		height: 44px;
+		border-radius: 50%;
+		border: 4px solid var(--border);
+		border-top-color: var(--aurora-green);
+		animation: spin 0.9s linear infinite;
+		margin-bottom: 0.5rem;
+	}
+
+	@keyframes spin {
+		to { transform: rotate(360deg); }
 	}
 
 	.restore { border-color: var(--gold-deep); }

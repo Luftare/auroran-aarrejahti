@@ -8,6 +8,8 @@ export const fi = {
 	locationDenied:
 		'Peli tarvitsee sijaintisi löytääkseen aarteet. Salli sijainti selaimen asetuksista ja lataa sivu uudelleen.',
 	locationUnavailable: 'Sijaintia ei saatu selville. Yritä hetken kuluttua uudelleen.',
+	locationNeeded: 'Peli tarvitsee sijaintisi toimiakseen.',
+	retry: 'Yritä uudelleen',
 	distanceToNearest: (dist: string) => `Lähin aarre on ${dist} päässä — kävele lähemmäs!`,
 	allLooted: 'Löysit kaikki tämän päivän aarteet! Uudet aarteet ilmestyvät keskiyöllä.',
 	noChestsToday: 'Aurora ei ole vielä kätkenyt tämän päivän aarteita.',
