@@ -38,6 +38,15 @@
 		});
 		map.on('dragstart', () => (panned = true));
 		map.touchPitch.disable();
+		// Pelikartta pidetään tekstittömänä: kadunnimet, paikannimet ja
+		// karttasymbolit poistetaan tyylistä. Aarteet saa löytää tutkimalla,
+		// ei lukemalla. (Attribuutio säilyy — se on karttaelementin päällä.)
+		map.on('style.load', () => {
+			if (!map) return;
+			for (const layer of [...map.getStyle().layers]) {
+				if (layer.type === 'symbol') map.removeLayer(layer.id);
+			}
+		});
 	});
 
 	onDestroy(() => map?.remove());
