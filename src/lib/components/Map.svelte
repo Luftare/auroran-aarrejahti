@@ -90,15 +90,30 @@
 	}
 </script>
 
+{#snippet controls(showRecenter: boolean)}
+	{#if showRecenter}
+		<button class="ctrl" style="--angle: 0deg" onclick={recenter} aria-label={fi.recenter}>◎</button>
+	{/if}
+	<button
+		class="ctrl"
+		style="--angle: {showRecenter ? 20 : 0}deg"
+		onclick={() => map?.zoomIn()}
+		aria-label={fi.zoomIn}>+</button
+	>
+	<button
+		class="ctrl"
+		style="--angle: {showRecenter ? 40 : 20}deg"
+		onclick={() => map?.zoomOut()}
+		aria-label={fi.zoomOut}>−</button
+	>
+{/snippet}
+
 <div class="circle">
 	<div class="map" bind:this={container}></div>
 	<!-- Painikkeet kaartuvat kartan oikeaan reunaan ympyrän kehää pitkin,
-	     jokainen yhtä kaukana kartan reunasta. -->
-	{#if panned && playerLat != null}
-		<button class="ctrl" style="--angle: -30deg" onclick={recenter} aria-label={fi.recenter}>◎</button>
-	{/if}
-	<button class="ctrl" style="--angle: -10deg" onclick={() => map?.zoomIn()} aria-label={fi.zoomIn}>+</button>
-	<button class="ctrl" style="--angle: 10deg" onclick={() => map?.zoomOut()} aria-label={fi.zoomOut}>−</button>
+	     jokainen yhtä kaukana kartan reunasta. Ylin painike on aina kartan
+	     vaaka-akselin tasalla (kulma 0°), ja muut jatkavat kaarta alaspäin. -->
+	{@render controls(panned && playerLat != null)}
 </div>
 
 <style>
@@ -132,6 +147,7 @@
 		left: calc(50% + 41% * cos(var(--angle)));
 		top: calc(50% + 41% * sin(var(--angle)));
 		transform: translate(-50%, -50%);
+		transition: left 200ms ease, top 200ms ease;
 		z-index: 5;
 		width: 10%;
 		aspect-ratio: 1;
