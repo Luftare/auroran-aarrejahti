@@ -1,7 +1,7 @@
 // Kaikki pelaajalle näkyvät tekstit. Ei kovakoodattuja tekstejä komponentteihin.
 
 export const fi = {
-	appName: 'Auroran aarre',
+	appName: 'Auroran aarrejahti',
 
 	// Päänäkymä
 	locating: 'Etsitään sijaintiasi…',
@@ -94,7 +94,7 @@ export const fi = {
 	introBody2:
 		'Avaa vähintään yksi arkku päivässä, niin putkesi kasvaa. Tulostaululta näet, kuka on löytänyt eniten aarteita.',
 	introLocation:
-		'Auroran aarre käyttää sijaintiasi vain aarteiden etsimiseen. Sijaintiasi ei tallenneta seurantaa varten.',
+		'Auroran aarrejahti käyttää sijaintiasi vain aarteiden etsimiseen. Sijaintiasi ei tallenneta seurantaa varten.',
 	introStart: 'Aloita seikkailu',
 
 	// Asetukset

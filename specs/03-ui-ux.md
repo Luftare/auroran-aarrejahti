@@ -88,7 +88,7 @@ A single prominent card whose content is state-driven:
 ## First-run experience
 
 1. Brief 2-panel intro (skip button): what the game is, how looting works.
-2. Geolocation permission request with a plain-language explanation *before* the browser prompt: *"Auroran aarre käyttää sijaintiasi vain aarteiden etsimiseen. Sijaintiasi ei tallenneta seurantaa varten."*
+2. Geolocation permission request with a plain-language explanation *before* the browser prompt: *"Auroran aarrejahti käyttää sijaintiasi vain aarteiden etsimiseen. Sijaintiasi ei tallenneta seurantaa varten."*
 3. A ghost account is created automatically; the player lands on the main view and can play immediately.
 4. A dismissible banner reminds ghost players (gently, max once per week) that their progress lives only in this browser.
 

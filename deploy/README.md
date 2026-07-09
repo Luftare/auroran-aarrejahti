@@ -38,7 +38,7 @@ One VM runs everything via Docker Compose: Caddy (TLS) → SvelteKit app → Pos
 
 ## Updating
 
-CI builds `ghcr.io/<owner>/auroran-aarre:latest` on every push to `main`. On the server:
+CI builds `ghcr.io/<owner>/auroran-aarrejahti:latest` on every push to `main`. On the server:
 
 ```bash
 cd /opt/aarre && docker compose pull app && docker compose up -d app

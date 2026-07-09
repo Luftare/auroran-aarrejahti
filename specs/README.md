@@ -1,6 +1,6 @@
-# Auroran aarre — Specification
+# Auroran aarrejahti — Specification
 
-Auroran aarre ("Aurora's treasure") is a Finnish-language, mobile-first PWA adventure game for the Järvenperä area. Every day, treasure chests spawn at pre-defined outdoor locations. Players walk to them, tap them open, and collect coins. A shared leaderboard and a daily streak reward consistency. The purpose is not the game itself — it is to get people outdoors on a daily walk, nudging them toward routes and places they would not otherwise visit.
+Auroran aarrejahti ("Aurora's treasure hunt") is a Finnish-language, mobile-first PWA adventure game for the Järvenperä area. Every day, treasure chests spawn at pre-defined outdoor locations. Players walk to them, tap them open, and collect coins. A shared leaderboard and a daily streak reward consistency. The purpose is not the game itself — it is to get people outdoors on a daily walk, nudging them toward routes and places they would not otherwise visit.
 
 ## Documents
 

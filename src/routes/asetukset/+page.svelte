@@ -98,7 +98,7 @@
 	<section class="card">
 		<h2>{fi.appInfo}</h2>
 		<p class="muted small">
-			{fi.appName} · <a href="https://github.com/ilmarikoskinen/auroran-aarre">{fi.sourceCode}</a>
+			{fi.appName} · <a href="https://github.com/ilmarikoskinen/auroran-aarrejahti">{fi.sourceCode}</a>
 		</p>
 		<p class="muted small">{fi.mapAttribution}</p>
 	</section>

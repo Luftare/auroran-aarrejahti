@@ -17,7 +17,7 @@
 
 ## PWA
 
-- `manifest.webmanifest`: name *Auroran aarre*, `display: standalone`, `orientation: portrait`, theme/background colors from the aurora palette, maskable icons.
+- `manifest.webmanifest`: name *Auroran aarrejahti*, `display: standalone`, `orientation: portrait`, theme/background colors from the aurora palette, maskable icons.
 - Service worker (SvelteKit's built-in `$service-worker` module):
   - Precache the app shell (HTML, JS, CSS, chest SVGs, icons).
   - Runtime cache map tiles with a stale-while-revalidate strategy and a size cap — Järvenperä is small, so the playable area's tiles effectively become available offline.

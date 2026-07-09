@@ -1,6 +1,6 @@
-# Auroran aarre
+# Auroran aarrejahti
 
-Auroran aarre on suomenkielinen, selaimessa toimiva paikallinen seikkailupeli: Aurora kätkee
+Auroran aarrejahti on suomenkielinen, selaimessa toimiva paikallinen seikkailupeli: Aurora kätkee
 joka yö aarrearkkuja eri puolille Järvenperää, ja pelaajat kävelevät arkuille, napauttavat ne
 auki ja keräävät kolikoita. Päiväputki ja yhteinen tulostaulu kannustavat päivittäiselle
 kävelylle uusia reittejä pitkin.

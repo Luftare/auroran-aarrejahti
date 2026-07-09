@@ -1,7 +1,7 @@
 // Haamupelaajan laiteavain säilytetään IndexedDB:ssä — sen katoaminen
 // tarkoittaa haamutilin katoamista, mistä pelaajaa muistutetaan.
 
-const DB_NAME = 'auroran-aarre';
+const DB_NAME = 'auroran-aarrejahti';
 const STORE = 'avaimet';
 
 function openDb(): Promise<IDBDatabase> {

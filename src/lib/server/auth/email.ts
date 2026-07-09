@@ -15,7 +15,7 @@ async function send(mail: Mail): Promise<void> {
 		secure: env.SMTP_PORT === '465',
 		auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined
 	});
-	await transport.sendMail({ from: env.SMTP_FROM || 'Auroran aarre <aurora@localhost>', ...mail });
+	await transport.sendMail({ from: env.SMTP_FROM || 'Auroran aarrejahti <aurora@localhost>', ...mail });
 }
 
 function baseUrl(): string {
@@ -25,7 +25,7 @@ function baseUrl(): string {
 export async function sendVerificationEmail(to: string, token: string): Promise<void> {
 	await send({
 		to,
-		subject: 'Vahvista sähköpostiosoitteesi — Auroran aarre',
+		subject: 'Vahvista sähköpostiosoitteesi — Auroran aarrejahti',
 		text: [
 			'Tervetuloa aarteenetsijäksi!',
 			'',
@@ -33,7 +33,7 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
 			'',
 			`${baseUrl()}/vahvista?avain=${token}`,
 			'',
-			'Jos et luonut tunnusta Auroran aarteeseen, voit jättää tämän viestin huomiotta.'
+			'Jos et luonut tunnusta Auroran aarrejahtiin, voit jättää tämän viestin huomiotta.'
 		].join('\n')
 	});
 }
@@ -41,7 +41,7 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
 export async function sendPasswordResetEmail(to: string, token: string): Promise<void> {
 	await send({
 		to,
-		subject: 'Salasanan vaihtaminen — Auroran aarre',
+		subject: 'Salasanan vaihtaminen — Auroran aarrejahti',
 		text: [
 			'Saimme pyynnön vaihtaa salasanasi.',
 			'',
