@@ -95,10 +95,10 @@
 	<!-- Painikkeet kaartuvat kartan oikeaan reunaan ympyrän kehää pitkin,
 	     jokainen yhtä kaukana kartan reunasta. -->
 	{#if panned && playerLat != null}
-		<button class="ctrl" style="--angle: -42deg" onclick={recenter} aria-label={fi.recenter}>◎</button>
+		<button class="ctrl" style="--angle: -30deg" onclick={recenter} aria-label={fi.recenter}>◎</button>
 	{/if}
-	<button class="ctrl" style="--angle: -14deg" onclick={() => map?.zoomIn()} aria-label={fi.zoomIn}>+</button>
-	<button class="ctrl" style="--angle: 14deg" onclick={() => map?.zoomOut()} aria-label={fi.zoomOut}>−</button>
+	<button class="ctrl" style="--angle: -10deg" onclick={() => map?.zoomIn()} aria-label={fi.zoomIn}>+</button>
+	<button class="ctrl" style="--angle: 10deg" onclick={() => map?.zoomOut()} aria-label={fi.zoomOut}>−</button>
 </div>
 
 <style>
@@ -122,16 +122,19 @@
 	}
 
 	/* Kulma 0° osoittaa suoraan oikealle; painikkeen keskipiste kiertää
-	   ympyrää, jonka säde on 41 % kartan halkaisijasta — reunaan jää siis
-	   aina sama 9 %:n väli. */
+	   ympyrää, jonka säde on 41 % kartan halkaisijasta. Kun painikkeen
+	   halkaisija on 10 % ja kulmaväli 20°, väli kartan reunaan ja
+	   painikkeiden väli on sama (~4 % halkaisijasta) kaikilla näytöillä:
+	   reunaväli 50 % − 41 % − 5 % = 4 %;
+	   keskipisteväli 2·41 %·sin(10°) ≈ 14 %, josta painikkeet vievät 10 %. */
 	.ctrl {
 		position: absolute;
 		left: calc(50% + 41% * cos(var(--angle)));
 		top: calc(50% + 41% * sin(var(--angle)));
 		transform: translate(-50%, -50%);
 		z-index: 5;
-		width: 42px;
-		height: 42px;
+		width: 10%;
+		aspect-ratio: 1;
 		border-radius: 50%;
 		background: rgba(16, 40, 51, 0.9);
 		border: 1px solid var(--border);
