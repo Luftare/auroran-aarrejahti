@@ -1,0 +1,17 @@
+{
+	"name": "Auroran aarre",
+	"short_name": "Auroran aarre",
+	"description": "Päivittäinen aarteenetsintä Järvenperässä — kävele arkulle ja avaa se!",
+	"lang": "fi",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "portrait",
+	"background_color": "#0b1d26",
+	"theme_color": "#0b1d26",
+	"icons": [
+		{ "src": "/kuvake.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+		{ "src": "/kuvake-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+		{ "src": "/kuvake-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+	]
+}
