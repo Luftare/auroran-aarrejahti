@@ -39,6 +39,13 @@ export const fi = {
 	debugGems: 'Näytä jalokivet (debug)',
 	close: 'Sulje',
 
+	// Kätköpaikkaeditori
+	editorTitle: 'Kätköpaikat',
+	editorSave: 'Tallenna',
+	editorHint: 'Napauta karttaa lisätäksesi · raahaa siirtääksesi · napauta merkkiä poistaaksesi',
+	editorSaved: (n: number) => `Tallennettu repositorioon — ${n} paikkaa.`,
+	editorSaveFailed: 'Tallennus epäonnistui. Editori toimii vain kehityspalvelimella (npm run dev).',
+
 	/** 200 m / 1,2 km — suomalainen muotoilu */
 	formatDistance(meters: number): string {
 		if (meters < 1000) return `${Math.max(10, Math.round(meters / 10) * 10)} m`;

@@ -12,6 +12,7 @@
 	import Flame from '@lucide/svelte/icons/flame';
 	import FlaskConical from '@lucide/svelte/icons/flask-conical';
 	import Gem from '@lucide/svelte/icons/gem';
+	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Package from '@lucide/svelte/icons/package';
 
 	let openChestId = $state<string | null>(null);
@@ -135,6 +136,11 @@
 		<Gem size={18} />
 	</button>
 
+	<!-- Kehitystyökalu: kätköpaikkaeditori -->
+	<a class="debug-btn editor" href="/editori" aria-label={fi.editorTitle}>
+		<MapPin size={18} />
+	</a>
+
 	{#if openChestId}
 		<ChestOverlay
 			streak={game.streak}
@@ -206,6 +212,10 @@
 
 	.debug-btn.gems {
 		bottom: calc(8.2rem + env(safe-area-inset-bottom));
+	}
+
+	.debug-btn.editor {
+		bottom: calc(11.4rem + env(safe-area-inset-bottom));
 	}
 
 	.hint {

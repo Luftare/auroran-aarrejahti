@@ -71,6 +71,10 @@ Sallitut poikkeukset — toiminnallisuutta, ei koristelua:
   (ks. `.chest-thumb-face`).
 - WASD-debug-kävely (`src/lib/game/player.svelte.ts`) ohittaa GPS:n kehitystestausta
   varten (50 m/s). Älä riko sitä — se on ainoa tapa testata peliä työpöydällä.
+- Kätköpaikkaeditori `/editori` kirjoittaa paikat repositorioon: vite.config.ts:n
+  slot-editor-plugin vastaa POST `/__editori/slotit` -kutsuun ja korvaa SLOTS-lohkon
+  `src/lib/game/chests.ts`-tiedostossa. Toimii vain kehityspalvelimella; editorikartta
+  pitää nimistön näkyvissä (toisin kuin pelikartta).
 
 ## Muut käytännöt
 

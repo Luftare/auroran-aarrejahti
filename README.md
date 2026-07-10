@@ -30,6 +30,11 @@ sijaintilupaa kävely alkaa pelialueen laidalta.
 Päivän arkut määrittää `src/lib/game/chests.ts`: slottilista ja päivämäärästä johdettu
 deterministinen valinta.
 
+**Kätköpaikkojen muokkaus:** avaa `/editori` (tai karttanäkymän nastanappi). Napauta
+karttaa lisätäksesi paikan, raahaa merkkiä siirtääksesi, napauta merkkiä poistaaksesi —
+Tallenna kirjoittaa paikat suoraan `src/lib/game/chests.ts`-tiedostoon (toimii vain
+kehityspalvelimella).
+
 ## Tekniikka
 
 SvelteKit (Svelte 5) + TypeScript · staattinen julkaisu (`@sveltejs/adapter-static`) ·
