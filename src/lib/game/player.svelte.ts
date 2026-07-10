@@ -6,7 +6,7 @@ import { geo, startWatching, stopWatching } from '$lib/client/geo.svelte';
 import { SLOTS } from './chests';
 
 /** Debug-kävelyn nopeus (m/s). Reipas vauhti, jotta arkkuvälit testaa sekunneissa. */
-const DEBUG_SPEED_MS = 50;
+const DEBUG_SPEED_MS = 300;
 
 /** Kun GPS:ää ei ole, debug-kävely alkaa ensimmäisen slotin pohjoispuolelta. */
 const FALLBACK_START = { lat: SLOTS[0].lat + 0.0012, lng: SLOTS[0].lng };

@@ -44,13 +44,14 @@
 		});
 		map.on('dragstart', () => (panned = true));
 		map.touchPitch.disable();
-		// Pelikartta pidetään tekstittömänä: kadunnimet, paikannimet ja
-		// karttasymbolit poistetaan tyylistä. Aarteet saa löytää tutkimalla,
-		// ei lukemalla. (Attribuutio säilyy — se on karttaelementin päällä.)
+		// Pelikartalta karsitaan paikannimet ja karttasymbolit, mutta
+		// kadunnimet jätetään näkyviin — ne auttavat suunnistamaan arkuille.
 		map.on('style.load', () => {
 			if (!map) return;
 			for (const layer of [...map.getStyle().layers]) {
-				if (layer.type === 'symbol') map.removeLayer(layer.id);
+				if (layer.type === 'symbol' && !layer.id.startsWith('highway-name')) {
+					map.removeLayer(layer.id);
+				}
 			}
 		});
 	});
@@ -91,6 +92,7 @@
 			if (chestMarkers.has(chest.id)) continue;
 			const el = document.createElement('button');
 			el.className = 'chest-thumb';
+			el.classList.toggle('in-range', chest.id === inRangeId);
 			el.setAttribute('aria-label', fi.tapToOpen);
 			// Animaatiot ja asemointi sisemmissä elementeissä: transform- tai
 			// position-muutos juurielementissä rikkoisi MapLibren sijoittelun.
@@ -119,10 +121,13 @@
 		}
 	});
 
-	// Kantaman sisällä oleva arkku korostuu
+	// Kantaman sisällä oleva arkku korostuu. Riippuvuus luetaan ennen
+	// silmukkaa: markkerikartta voi olla tyhjä ensimmäisellä ajolla, eikä
+	// efekti muuten rekisteröisi inRangeId:tä lainkaan.
 	$effect(() => {
+		const active = inRangeId;
 		for (const [id, marker] of chestMarkers) {
-			marker.getElement().classList.toggle('in-range', id === inRangeId);
+			marker.getElement().classList.toggle('in-range', id === active);
 		}
 	});
 
@@ -205,16 +210,37 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		overflow: hidden; /* kiiltopyyhkäisy leikkautuu ympyrään */
 	}
 
-	/* Kantamassa: aarre kasvaa 1,5-kertaiseksi ja heiluu silloin tällöin
-	   varovasti — kuin joululahja, jota ravistellaan uteliaana */
+	/* Kantamassa: aarre pomppaa 1,5-kertaiseksi ja heiluu silloin tällöin
+	   varovasti — kuin joululahja, jota ravistellaan uteliaana. Kullan yli
+	   pyyhkäisevä kiilto heilautuksen tahdissa kutsuu avaamaan. */
 	:global(.chest-thumb.in-range .chest-thumb-ring) {
-		animation: present-shake 2.4s ease-in-out infinite;
+		animation:
+			present-pop 0.35s ease-out forwards,
+			present-shake 2.2s 0.35s ease-in-out infinite;
 	}
 
 	:global(.chest-thumb.in-range .chest-thumb-ground) {
 		transform: translateY(11px) scale(1.35);
+	}
+
+	:global(.chest-thumb.in-range .chest-thumb-face::after) {
+		content: '';
+		position: absolute;
+		top: -20%;
+		left: -70%;
+		width: 45%;
+		height: 140%;
+		background: linear-gradient(
+			105deg,
+			rgba(255, 255, 255, 0) 0%,
+			rgba(255, 255, 255, 0.8) 50%,
+			rgba(255, 255, 255, 0) 100%
+		);
+		transform: skewX(-18deg);
+		animation: glint 2.2s 0.35s ease-in-out infinite;
 	}
 
 	/* Varjo: merkkiä pienempi ja hieman alaspäin siirretty — pilkistää
@@ -271,14 +297,27 @@
 	}
 
 
+	/* Saapuminen: pieni ylitys ennen asettumista 1,5-kokoon */
+	@keyframes present-pop {
+		0% { transform: scale(1); }
+		60% { transform: scale(1.64); }
+		100% { transform: scale(1.5); }
+	}
+
 	/* Enimmäkseen levossa; lyhyt hento heilautus kierroksen lopulla */
 	@keyframes present-shake {
 		0%, 55% { transform: scale(1.5) rotate(0deg); }
-		61% { transform: scale(1.5) rotate(-5deg); }
-		67% { transform: scale(1.5) rotate(4deg); }
-		73% { transform: scale(1.5) rotate(-3deg); }
+		61% { transform: scale(1.5) rotate(-6deg); }
+		67% { transform: scale(1.5) rotate(5deg); }
+		73% { transform: scale(1.5) rotate(-4deg); }
 		79% { transform: scale(1.5) rotate(2deg); }
 		85%, 100% { transform: scale(1.5) rotate(0deg); }
+	}
+
+	/* Kiilto pyyhkäisee kullan yli heilautuksen aikaan */
+	@keyframes glint {
+		0%, 52% { left: -70%; }
+		78%, 100% { left: 130%; }
 	}
 
 	/* Valkoinen rengas on karttamerkin luettavuutta karttapohjaa vasten,
