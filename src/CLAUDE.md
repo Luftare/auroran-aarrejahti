@@ -28,8 +28,11 @@ Sallitut poikkeukset — toiminnallisuutta, ei koristelua:
 - Karttamerkkien valkoiset renkaat (pelaajapiste) säilyvät, jotta merkit erottuvat
   vaihtelevasta karttapohjasta.
 - Arkkumerkeissä kultatausta ja UI-nappien värinen reunus (`--bg-high`) — merkki
-  poimii pelin nappityylin. Keskitetty maavarjo ja säteilevät kutsuaallot ovat
-  pelitaidetta (houkutteleva keräilykohde maassa), eivät UI-kromia.
+  poimii pelin nappityylin. Keskitetty maavarjo ja säteilevät kipinät ovat
+  pelitaidetta (houkutteleva keräilykohde maassa), eivät UI-kromia. Kantamassa
+  merkki kasvaa 1,5× ja heilahtaa hennosti kuin ravisteltava lahjapaketti.
+- Kartan päällä kelluvissa napeissa (esim. "Avaa aarre!" -CTA) tumma reunus
+  (`--bg-high`) on sallittu — vaalea karttapohja vaatii kontrastin.
 - Peligrafiikan (arkku-SVG) ääriviivat ovat kuvitusta, eivät UI-kromia.
 
 ## Ikonit

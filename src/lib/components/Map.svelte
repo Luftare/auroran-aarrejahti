@@ -207,9 +207,14 @@
 		justify-content: center;
 	}
 
-	:global(.chest-thumb.in-range .chest-thumb-face) {
-		background: var(--aurora-green);
-		animation: beckon 0.9s ease-in-out infinite;
+	/* Kantamassa: aarre kasvaa 1,5-kertaiseksi ja heiluu silloin tällöin
+	   varovasti — kuin joululahja, jota ravistellaan uteliaana */
+	:global(.chest-thumb.in-range .chest-thumb-ring) {
+		animation: present-shake 2.4s ease-in-out infinite;
+	}
+
+	:global(.chest-thumb.in-range .chest-thumb-ground) {
+		transform: translateY(11px) scale(1.35);
 	}
 
 	/* Varjo: merkkiä pienempi ja hieman alaspäin siirretty — pilkistää
@@ -266,9 +271,14 @@
 	}
 
 
-	@keyframes beckon {
-		0%, 100% { transform: scale(1); }
-		50% { transform: scale(1.12); }
+	/* Enimmäkseen levossa; lyhyt hento heilautus kierroksen lopulla */
+	@keyframes present-shake {
+		0%, 55% { transform: scale(1.5) rotate(0deg); }
+		61% { transform: scale(1.5) rotate(-5deg); }
+		67% { transform: scale(1.5) rotate(4deg); }
+		73% { transform: scale(1.5) rotate(-3deg); }
+		79% { transform: scale(1.5) rotate(2deg); }
+		85%, 100% { transform: scale(1.5) rotate(0deg); }
 	}
 
 	/* Valkoinen rengas on karttamerkin luettavuutta karttapohjaa vasten,

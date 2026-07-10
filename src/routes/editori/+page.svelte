@@ -192,7 +192,7 @@
 	.hint {
 		position: absolute;
 		left: 50%;
-		bottom: calc(1.5rem + env(safe-area-inset-bottom));
+		bottom: calc(3rem + env(safe-area-inset-bottom));
 		transform: translateX(-50%);
 		z-index: 10;
 		max-width: min(88vw, 440px);

@@ -13,7 +13,7 @@ export const fi = {
 
 	// Kartta
 	distanceToNearest: (dist: string) => `Lähin aarre on ${dist} päässä — kävele lähemmäs!`,
-	tapNearbyChest: 'Aarre löytyi — napauta arkkua!',
+	openTreasure: 'Avaa aarre!',
 	allLooted: 'Löysit kaikki tämän päivän aarteet! Uudet aarteet ilmestyvät keskiyöllä.',
 	recenter: 'Palaa omaan sijaintiin',
 	zoomIn: 'Lähennä',

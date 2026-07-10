@@ -16,7 +16,6 @@
 	import Package from '@lucide/svelte/icons/package';
 
 	let openChestId = $state<string | null>(null);
-	let dismissedChestId = $state<string | null>(null);
 	// Debug: avaa arkkunäkymän ilman kävelyä eikä tallenna keräystä
 	let debugChestOpen = $state(false);
 	// Debug: jalokivigalleria
@@ -47,19 +46,8 @@
 			: null
 	);
 
-	// Arkku aukeaa automaattisesti, kun pelaaja kävelee sen luo — paitsi jos
-	// pelaaja itse palasi kartalle saman arkun kohdalla.
-	$effect(() => {
-		if (!openChestId && inRangeChestId && inRangeChestId !== dismissedChestId) {
-			openChestId = inRangeChestId;
-		}
-	});
-
 	function onchestclick(id: string) {
-		if (id === inRangeChestId) {
-			dismissedChestId = null;
-			openChestId = id;
-		}
+		if (id === inRangeChestId) openChestId = id;
 	}
 
 	function onVisible() {
@@ -103,24 +91,29 @@
 		{/if}
 	</div>
 
-	<!-- Tilarivi alhaalla: sijainnin tila tai etäisyys lähimpään aarteeseen -->
-	<div class="hint">
-		{#if player.source === 'none'}
-			{#if player.geoStatus === 'denied'}
-				{fi.locationDenied}
-			{:else if player.geoStatus === 'unavailable'}
-				{fi.locationUnavailable}
+	{#if inRangeChestId}
+		<!-- Aarre saavutettu: kehotus avaamaan ruudun alalaidassa -->
+		<button class="btn btn-gold open-cta" onclick={() => (openChestId = inRangeChestId)}>
+			{fi.openTreasure}
+		</button>
+	{:else}
+		<!-- Tilarivi alhaalla: sijainnin tila tai etäisyys lähimpään aarteeseen -->
+		<div class="hint">
+			{#if player.source === 'none'}
+				{#if player.geoStatus === 'denied'}
+					{fi.locationDenied}
+				{:else if player.geoStatus === 'unavailable'}
+					{fi.locationUnavailable}
+				{:else}
+					{fi.locating}
+				{/if}
+			{:else if !nearest}
+				{fi.allLooted}
 			{:else}
-				{fi.locating}
+				{fi.distanceToNearest(fi.formatDistance(nearest.distance))}
 			{/if}
-		{:else if !nearest}
-			{fi.allLooted}
-		{:else if inRangeChestId}
-			{fi.tapNearbyChest}
-		{:else}
-			{fi.distanceToNearest(fi.formatDistance(nearest.distance))}
-		{/if}
-	</div>
+		</div>
+	{/if}
 
 	<!-- Debug: arkun avauksen kokeilu ilman kävelyä (ei tallenna mitään) -->
 	<button class="debug-btn" onclick={() => (debugChestOpen = true)} aria-label={fi.debugChest}>
@@ -145,10 +138,7 @@
 		<ChestOverlay
 			streak={game.streak}
 			oncollect={() => collectChest(openChestId!)}
-			onback={() => {
-				dismissedChestId = openChestId;
-				openChestId = null;
-			}}
+			onback={() => (openChestId = null)}
 		/>
 	{:else if debugChestOpen}
 		<ChestOverlay
@@ -218,10 +208,24 @@
 		bottom: calc(11.4rem + env(safe-area-inset-bottom));
 	}
 
+	/* Tumma reunus erottaa napin vaaleasta karttapohjasta */
+	.open-cta {
+		position: absolute;
+		left: 50%;
+		bottom: calc(3rem + env(safe-area-inset-bottom));
+		transform: translateX(-50%);
+		z-index: 10;
+		width: min(60vw, 280px);
+		padding: 0.9rem 1.4rem;
+		font-size: 1.15rem;
+		font-weight: 800;
+		border: 3px solid var(--bg-high);
+	}
+
 	.hint {
 		position: absolute;
 		left: 50%;
-		bottom: calc(1.5rem + env(safe-area-inset-bottom));
+		bottom: calc(3rem + env(safe-area-inset-bottom));
 		transform: translateX(-50%);
 		z-index: 10;
 		max-width: min(85vw, 420px);
