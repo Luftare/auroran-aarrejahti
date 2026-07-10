@@ -37,9 +37,6 @@ sw.addEventListener('fetch', (event) => {
 	const url = new URL(event.request.url);
 	if (event.request.method !== 'GET') return;
 
-	// Peli vaatii verkon — API-kutsuja ei koskaan tarjoilla välimuistista.
-	if (url.origin === location.origin && url.pathname.startsWith('/api')) return;
-
 	// Karttalaatat: välimuisti ensin, päivitys taustalla. Järvenperä on pieni,
 	// joten pelialueen laatat pysyvät tarjolla myös katvealueilla.
 	if (TILE_HOSTS.includes(url.hostname)) {

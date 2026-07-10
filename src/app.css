@@ -1,10 +1,12 @@
-/* Auroran aarrejahti — yötaivas ja revontulet */
+/* Auroran aarrejahti — yötaivas ja revontulet.
+   Tyyli on täysin litteä ja reunaton: ei varjoja, ei hehkuja, ei reunaviivoja,
+   ei liukuvärejä. Pinnat erottuvat toisistaan vain taustavärein. Ks. src/CLAUDE.md. */
 
 :root {
 	--bg: #0b1d26;
 	--bg-raised: #102833;
 	--bg-card: #143240;
-	--border: #1f4454;
+	--bg-high: #1f4454;
 	--text: #eaf4f4;
 	--muted: #9db7bf;
 	--aurora-green: #3ddc97;
@@ -14,7 +16,6 @@
 	--gold-deep: #e0a93f;
 	--danger: #ff6b6b;
 	--radius: 16px;
-	--shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -36,10 +37,7 @@ body {
 }
 
 body {
-	background:
-		radial-gradient(120% 60% at 50% -10%, rgba(61, 220, 151, 0.12), transparent 60%),
-		radial-gradient(100% 50% at 80% 0%, rgba(155, 123, 255, 0.1), transparent 55%),
-		var(--bg);
+	background: var(--bg);
 }
 
 h1, h2, h3 {
@@ -65,8 +63,7 @@ button {
 	padding: 0.8rem 1.4rem;
 	border-radius: 999px;
 	font-weight: 600;
-	background: var(--bg-card);
-	border: 1px solid var(--border);
+	background: var(--bg-high);
 	color: var(--text);
 	transition: transform 120ms ease, filter 120ms ease;
 	text-decoration: none;
@@ -76,23 +73,19 @@ button {
 .btn:disabled { opacity: 0.5; pointer-events: none; }
 
 .btn-primary {
-	background: linear-gradient(120deg, var(--aurora-green), var(--aurora-teal) 55%, var(--aurora-violet));
+	background: var(--aurora-green);
 	color: #06222b;
-	border: none;
 }
 
 .btn-gold {
-	background: linear-gradient(120deg, var(--gold), var(--gold-deep));
+	background: var(--gold);
 	color: #3a2a00;
-	border: none;
 }
 
 .card {
 	background: var(--bg-card);
-	border: 1px solid var(--border);
 	border-radius: var(--radius);
 	padding: 1rem 1.2rem;
-	box-shadow: var(--shadow);
 }
 
 .muted { color: var(--muted); }
@@ -102,15 +95,15 @@ input {
 	width: 100%;
 	padding: 0.75rem 1rem;
 	border-radius: 12px;
-	border: 1px solid var(--border);
+	border: none;
 	background: var(--bg-raised);
 	color: var(--text);
 }
 
+/* Näppäimistökäytön kohdistusrengas on saavutettavuutta, ei koristelua */
 input:focus {
 	outline: 2px solid var(--aurora-teal);
 	outline-offset: 1px;
-	border-color: transparent;
 }
 
 label {

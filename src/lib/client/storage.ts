@@ -1,5 +1,5 @@
-// Haamupelaajan laiteavain säilytetään IndexedDB:ssä — sen katoaminen
-// tarkoittaa haamutilin katoamista, mistä pelaajaa muistutetaan.
+// Kaikki pelin data säilytetään IndexedDB:ssä tällä laitteella —
+// selaimen tietojen tyhjentäminen nollaa pelin.
 
 const DB_NAME = 'auroran-aarrejahti';
 const STORE = 'avaimet';

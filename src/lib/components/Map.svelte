@@ -3,17 +3,26 @@
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { fi } from '$lib/fi';
-
-	type Chest = { id: string; lat: number; lng: number; looted: boolean };
+	import type { Chest } from '$lib/game/chests';
+	import LocateFixed from '@lucide/svelte/icons/locate-fixed';
+	import Minus from '@lucide/svelte/icons/minus';
+	import Plus from '@lucide/svelte/icons/plus';
 
 	let {
 		chests = [] as Chest[],
 		playerLat = null as number | null,
 		playerLng = null as number | null,
-		accuracy = 0
+		inRangeId = null as string | null,
+		onchestclick
+	}: {
+		chests: Chest[];
+		playerLat: number | null;
+		playerLng: number | null;
+		inRangeId: string | null;
+		onchestclick: (id: string) => void;
 	} = $props();
 
-	const DEFAULT_CENTER: [number, number] = [24.65, 60.278]; // Järvenperä
+	const DEFAULT_CENTER: [number, number] = [24.7095, 60.2375]; // pelialueen keskellä
 
 	let container: HTMLDivElement;
 	let map: maplibregl.Map | null = null;
@@ -22,11 +31,8 @@
 	let panned = $state(false);
 	let centeredOnce = false;
 
-	const CHEST_SVG = `<svg viewBox="0 0 24 24" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
-		<rect x="3" y="10" width="18" height="10" rx="2" fill="#8a5a2b" stroke="#5c3a17" stroke-width="1.2"/>
-		<path d="M3 10a9 5.5 0 0 1 18 0z" fill="#a06a33" stroke="#5c3a17" stroke-width="1.2"/>
-		<rect x="10.4" y="9" width="3.2" height="5" rx="1" fill="#ffd166" stroke="#b8860b" stroke-width="0.8"/>
-	</svg>`;
+	// 3D-arkkumallista renderöity kuva (static/arkku.png)
+	const CHEST_IMG = '<img src="/arkku.png" alt="" width="34" height="34" draggable="false" />';
 
 	onMount(() => {
 		map = new maplibregl.Map({
@@ -51,7 +57,7 @@
 
 	onDestroy(() => map?.remove());
 
-	// Pelaajan sijaintimerkki
+	// Pelaajan sijaintimerkki — kamera seuraa, kunnes pelaaja panoroi itse
 	$effect(() => {
 		if (!map || playerLat == null || playerLng == null) return;
 		if (!playerMarker) {
@@ -65,10 +71,12 @@
 		if (!centeredOnce) {
 			centeredOnce = true;
 			map.jumpTo({ center: [playerLng, playerLat], zoom: 15 });
+		} else if (!panned) {
+			map.setCenter([playerLng, playerLat]);
 		}
 	});
 
-	// Arkkumerkit — avatut arkut poistuvat pelaajan kartalta
+	// Arkut ympyräthumbnaileina — kerätyt poistuvat kartalta
 	$effect(() => {
 		if (!map) return;
 		const visible = chests.filter((c) => !c.looted);
@@ -81,13 +89,40 @@
 		}
 		for (const chest of visible) {
 			if (chestMarkers.has(chest.id)) continue;
-			const el = document.createElement('div');
-			el.className = 'chest-marker';
-			el.innerHTML = CHEST_SVG;
+			const el = document.createElement('button');
+			el.className = 'chest-thumb';
+			el.setAttribute('aria-label', fi.tapToOpen);
+			// Animaatiot ja asemointi sisemmissä elementeissä: transform- tai
+			// position-muutos juurielementissä rikkoisi MapLibren sijoittelun.
+			// Rakenne: keskitetty varjo (makaa maassa) + ulospäin säteilevät
+			// kipinät (vrt. vihreän jalokiven efekti) + reunus + arkkukuva.
+			// Kaksi kipinäerää: pieniä täpliä ja pyörähteleviä nelisakaraisia tähtiä
+			const spark = (cls: string) => {
+				const angle = Math.random() * Math.PI * 2;
+				const dist = 44 + Math.random() * 18;
+				const dur = (1.8 + Math.random()).toFixed(2);
+				const delay = (Math.random() * 2.5).toFixed(2);
+				return `<span class="${cls}" style="--dx:${(Math.cos(angle) * dist).toFixed(1)}px;--dy:${(Math.sin(angle) * dist).toFixed(1)}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+			};
+			const sparks =
+				Array.from({ length: 8 }, () => spark('chest-spark')).join('') +
+				Array.from({ length: 5 }, () => spark('chest-spark star')).join('');
+			el.innerHTML = `<span class="chest-thumb-inner"><span class="chest-thumb-ground"></span>${sparks}<span class="chest-thumb-ring"><span class="chest-thumb-face">${CHEST_IMG}</span></span></span>`;
+			el.addEventListener('click', (e) => {
+				e.stopPropagation();
+				onchestclick(chest.id);
+			});
 			chestMarkers.set(
 				chest.id,
 				new maplibregl.Marker({ element: el }).setLngLat([chest.lng, chest.lat]).addTo(map)
 			);
+		}
+	});
+
+	// Kantaman sisällä oleva arkku korostuu
+	$effect(() => {
+		for (const [id, marker] of chestMarkers) {
+			marker.getElement().classList.toggle('in-range', id === inRangeId);
 		}
 	});
 
@@ -99,79 +134,145 @@
 	}
 </script>
 
-{#snippet controls(showRecenter: boolean)}
-	{#if showRecenter}
-		<button class="ctrl" style="--angle: 0deg" onclick={recenter} aria-label={fi.recenter}>◎</button>
-	{/if}
-	<button
-		class="ctrl"
-		style="--angle: {showRecenter ? 20 : 0}deg"
-		onclick={() => map?.zoomIn()}
-		aria-label={fi.zoomIn}>+</button
-	>
-	<button
-		class="ctrl"
-		style="--angle: {showRecenter ? 40 : 20}deg"
-		onclick={() => map?.zoomOut()}
-		aria-label={fi.zoomOut}>−</button
-	>
-{/snippet}
+<div class="map" bind:this={container}></div>
 
-<div class="circle">
-	<div class="map" bind:this={container}></div>
-	<!-- Painikkeet kaartuvat kartan oikeaan reunaan ympyrän kehää pitkin,
-	     jokainen yhtä kaukana kartan reunasta. Ylin painike on aina kartan
-	     vaaka-akselin tasalla (kulma 0°), ja muut jatkavat kaarta alaspäin. -->
-	{@render controls(panned && playerLat != null)}
+<div class="controls">
+	{#if panned && playerLat != null}
+		<button class="ctrl" onclick={recenter} aria-label={fi.recenter}><LocateFixed size={18} /></button>
+	{/if}
+	<button class="ctrl" onclick={() => map?.zoomIn()} aria-label={fi.zoomIn}><Plus size={18} /></button>
+	<button class="ctrl" onclick={() => map?.zoomOut()} aria-label={fi.zoomOut}><Minus size={18} /></button>
 </div>
 
 <style>
-	.circle {
-		position: relative;
-		width: min(90vw, 420px);
-		aspect-ratio: 1;
-		margin: 0 auto;
-		border-radius: 50%;
-		overflow: hidden;
-		border: 3px solid var(--border);
-		box-shadow:
-			0 0 0 6px rgba(61, 220, 151, 0.08),
-			0 0 40px rgba(61, 220, 151, 0.15),
-			var(--shadow);
-	}
-
 	.map {
 		position: absolute;
 		inset: 0;
 	}
 
-	/* Kulma 0° osoittaa suoraan oikealle; painikkeen keskipiste kiertää
-	   ympyrää, jonka säde on 41 % kartan halkaisijasta. Kun painikkeen
-	   halkaisija on 10 % ja kulmaväli 20°, väli kartan reunaan ja
-	   painikkeiden väli on sama (~4 % halkaisijasta) kaikilla näytöillä:
-	   reunaväli 50 % − 41 % − 5 % = 4 %;
-	   keskipisteväli 2·41 %·sin(10°) ≈ 14 %, josta painikkeet vievät 10 %. */
-	.ctrl {
+	/* Tilarivin yläpuolella, ettei alin painike jää sen alle */
+	.controls {
 		position: absolute;
-		left: calc(50% + 41% * cos(var(--angle)));
-		top: calc(50% + 41% * sin(var(--angle)));
-		transform: translate(-50%, -50%);
-		transition: left 200ms ease, top 200ms ease;
-		z-index: 5;
-		width: 10%;
-		aspect-ratio: 1;
+		right: 1rem;
+		bottom: calc(5rem + env(safe-area-inset-bottom));
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		z-index: 10;
+	}
+
+	.ctrl {
+		width: 44px;
+		height: 44px;
 		border-radius: 50%;
 		background: rgba(16, 40, 51, 0.9);
-		border: 1px solid var(--border);
 		color: var(--text);
-		font-size: 1.3rem;
-		font-weight: 700;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		backdrop-filter: blur(4px);
 	}
 
+	/* Arkku ympyräthumbnailina kartalla: leijuu varjonsa yllä ja sitä
+	   kiertää hohtava kultareunus — arvokas ja houkutteleva */
+	:global(.chest-thumb) {
+		cursor: pointer;
+		line-height: 0;
+	}
+
+	:global(.chest-thumb-inner) {
+		position: relative;
+		display: block;
+	}
+
+	/* Reunus samaa väriä kuin muut UI-napit — merkki istuu muuhun
+	   käyttöliittymään; kultatausta nostaa arkun arvokkaaksi */
+	:global(.chest-thumb-ring) {
+		position: relative;
+		display: block;
+		width: 52px;
+		height: 52px;
+		padding: 3px;
+		border-radius: 50%;
+		background: var(--bg-high);
+	}
+
+	:global(.chest-thumb-face) {
+		position: relative;
+		width: 46px;
+		height: 46px;
+		border-radius: 50%;
+		background: var(--gold);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	:global(.chest-thumb.in-range .chest-thumb-face) {
+		background: var(--aurora-green);
+		animation: beckon 0.9s ease-in-out infinite;
+	}
+
+	/* Varjo: merkkiä pienempi ja hieman alaspäin siirretty — pilkistää
+	   arkun takaa ja alta, kuin merkki kohoaisi aavistuksen maasta */
+	:global(.chest-thumb-ground) {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 44px;
+		height: 44px;
+		margin: -22px 0 0 -22px;
+		transform: translateY(8px);
+		border-radius: 50%;
+		background: radial-gradient(circle, rgba(6, 10, 14, 0.45) 45%, rgba(6, 10, 14, 0) 72%);
+	}
+
+	/* Ulospäin säteilevät kipinät: pieniä teräviä täpliä, jotka nousevat
+	   merkin takaa ja haipuvat matkalla — sama efekti kuin jalokivillä.
+	   Väri sama kuin reunuksella. */
+	:global(.chest-spark) {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 4px;
+		height: 4px;
+		margin: -2px;
+		border-radius: 50%;
+		background: var(--bg-high);
+		opacity: 0;
+		animation: chest-spark linear infinite;
+		pointer-events: none;
+	}
+
+	@keyframes chest-spark {
+		0% { transform: translate(0, 0) scale(1); opacity: 0.9; }
+		60% { opacity: 0.85; }
+		100% { transform: translate(var(--dx), var(--dy)) scale(0.55); opacity: 0; }
+	}
+
+	/* Toinen erä: nelisakaraiset tähdet, jotka pyörähtävät lentäessään */
+	:global(.chest-spark.star) {
+		width: 9px;
+		height: 9px;
+		margin: -4.5px;
+		border-radius: 0;
+		clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+		animation-name: chest-spark-star;
+	}
+
+	@keyframes chest-spark-star {
+		0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 0.9; }
+		60% { opacity: 0.85; }
+		100% { transform: translate(var(--dx), var(--dy)) rotate(160deg) scale(0.5); opacity: 0; }
+	}
+
+
+	@keyframes beckon {
+		0%, 100% { transform: scale(1); }
+		50% { transform: scale(1.12); }
+	}
+
+	/* Valkoinen rengas on karttamerkin luettavuutta karttapohjaa vasten,
+	   ei käyttöliittymän koristelua */
 	:global(.player-dot) {
 		position: relative;
 		width: 22px;
@@ -184,7 +285,6 @@
 		border-radius: 50%;
 		background: var(--aurora-teal);
 		border: 2px solid #fff;
-		box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
 	}
 
 	:global(.player-pulse) {
@@ -198,15 +298,5 @@
 	@keyframes pulse {
 		0% { transform: scale(0.6); opacity: 0.9; }
 		100% { transform: scale(2.4); opacity: 0; }
-	}
-
-	:global(.chest-marker) {
-		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-		animation: bob 2.4s ease-in-out infinite;
-	}
-
-	@keyframes bob {
-		0%, 100% { transform: translateY(0); }
-		50% { transform: translateY(-4px); }
 	}
 </style>

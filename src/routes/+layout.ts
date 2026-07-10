@@ -1,3 +1,3 @@
-// Pelin tila elää selaimessa ja API:ssa — sivut renderöidään asiakkaassa.
+// Koko peli renderöidään selaimessa ja julkaistaan staattisina tiedostoina.
 export const ssr = false;
-export const prerender = false;
+export const prerender = true;

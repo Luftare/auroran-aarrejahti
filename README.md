@@ -1,12 +1,20 @@
 # Auroran aarrejahti
 
-Auroran aarrejahti on suomenkielinen, selaimessa toimiva paikallinen seikkailupeli: Aurora kätkee
-joka yö aarrearkkuja eri puolille Järvenperää, ja pelaajat kävelevät arkuille, napauttavat ne
-auki ja keräävät kolikoita. Päiväputki ja yhteinen tulostaulu kannustavat päivittäiselle
-kävelylle uusia reittejä pitkin.
+Auroran aarrejahti on suomenkielinen, selaimessa toimiva paikallinen seikkailupeli: Aurora
+kätkee joka yö aarrearkkuja ennalta määriteltyihin paikkoihin, ja pelaajat kävelevät arkuille
+ja napauttavat ne auki. Päiväputki kannustaa palaamaan pelin ääreen joka päivä.
 
-Pelin määrittely on kansiossa [`specs/`](specs/README.md) ja tuotantoasennuksen ohjeet
-kansiossa [`deploy/`](deploy/README.md).
+Peli toimii **kokonaan selaimessa ilman palvelinta**: kaikki data (kerätyt arkut, putki)
+säilyy laitteen IndexedDB:ssä, ja päivän arkkupaikat valitaan deterministisellä algoritmilla,
+jonka siemenenä on päivämäärä — kaikki pelaajat näkevät samat arkut ilman keskuspalvelinta.
+Julkaisuun riittää staattinen tiedostohosting.
+
+Tässä vaiheessa peli on tarkoituksella riisuttu kokeiluversio: ei tunnuksia, ei nimimerkkejä,
+ei tulostaulua. Fokus on aarteen keräämisen tuntumassa ja siinä, palaako pelaaja peliin
+päivittäin. Vanha palvelinpohjainen versio (tilit, tulostaulu, ylläpito) löytyy
+git-historiasta.
+
+Pelin alkuperäinen laajempi määrittely on kansiossa [`specs/`](specs/README.md).
 
 ## Kehitys
 
@@ -15,28 +23,20 @@ npm install
 npm run dev
 ```
 
-Kehityskäytössä ei tarvita tietokanta-asennusta: ilman `DATABASE_URL`-ympäristömuuttujaa
-sovellus käyttää sulautettua PGlite-tietokantaa (`.dev-db/`) ja kylvää Järvenperän
-esimerkkikätköpaikat automaattisesti. Vahvistus- ja palautussähköpostit tulostuvat
-terminaaliin, ellei SMTP:tä ole määritetty.
+**Liikkuminen ilman ulkoilua:** WASD-näppäimet ohjaavat pelaajan sijaintia (50 m/s) ja
+ohittavat oikean GPS-sijainnin — ensimmäinen painallus kytkee debug-tilan päälle. Ilman
+sijaintilupaa kävely alkaa pelialueen laidalta.
 
-Ylläpitotunnus luodaan käynnistyksessä ympäristömuuttujista:
-
-```bash
-ADMIN_EMAIL=sinä@example.fi ADMIN_PASSWORD=vahva-salasana npm run dev
-```
-
-Sijainnin simulointi työpöytäselaimessa: DevTools → Sensors → Location → syötä koordinaatit
-(esim. `60.2762, 24.6394`, demo­kätkö "Lammen laituri").
+Päivän arkut määrittää `src/lib/game/chests.ts`: slottilista ja päivämäärästä johdettu
+deterministinen valinta.
 
 ## Tekniikka
 
-SvelteKit (Svelte 5) + TypeScript · PostgreSQL + Drizzle ORM (kehityksessä PGlite) ·
-MapLibre GL + OpenFreeMap-laatat · PWA. Tuotannossa Docker Compose: Caddy → Node → Postgres.
+SvelteKit (Svelte 5) + TypeScript · staattinen julkaisu (`@sveltejs/adapter-static`) ·
+IndexedDB · MapLibre GL + OpenFreeMap-laatat · Lucide-ikonit · PWA.
 
 Karttatiedot © [OpenStreetMapin](https://www.openstreetmap.org/copyright) tekijät.
 
 ## Lisenssi
 
-MIT — katso [LICENSE](LICENSE). Julkinen lähdekoodi, yksityinen asennus: tuotantopalvelimen
-salaisuudet (`.env`) eivät koskaan kuulu tähän repositorioon.
+MIT — katso [LICENSE](LICENSE).
