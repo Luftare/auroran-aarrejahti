@@ -2,6 +2,7 @@
 // IndexedDB:ssä tällä laitteella — palvelinta ei ole.
 
 import { idbGet, idbSet } from '$lib/client/storage';
+import { GEM_ORDER, type GemKind } from '$lib/components/gems3d';
 import { currentDay, dailySlots, type Chest } from './chests';
 
 type Persisted = {
@@ -10,10 +11,20 @@ type Persisted = {
 	streakCurrent: number;
 	lastLootDay: string | null;
 	totalCollected: number;
+	/** Kerätyt jalokivet lajeittain. */
+	gems: Partial<Record<GemKind, number>>;
 };
 
 const KEY = 'pelitila';
-const EMPTY: Persisted = { lootedByDay: {}, streakCurrent: 0, lastLootDay: null, totalCollected: 0 };
+const EMPTY: Persisted = {
+	lootedByDay: {},
+	streakCurrent: 0,
+	lastLootDay: null,
+	totalCollected: 0,
+	gems: {}
+};
+
+export type CollectResult = { firstToday: boolean; gem: GemKind };
 
 export const game = $state<{
 	ready: boolean;
@@ -21,7 +32,8 @@ export const game = $state<{
 	chests: Chest[];
 	streak: number;
 	total: number;
-}>({ ready: false, day: '', chests: [], streak: 0, total: 0 });
+	gems: Partial<Record<GemKind, number>>;
+}>({ ready: false, day: '', chests: [], streak: 0, total: 0, gems: {} });
 
 let persisted: Persisted = { ...EMPTY };
 
@@ -44,6 +56,7 @@ function buildDay(today: string): void {
 	game.chests = dailySlots(today).map((s) => ({ ...s, looted: looted.has(s.id) }));
 	game.streak = effectiveStreak(persisted, today);
 	game.total = persisted.totalCollected;
+	game.gems = { ...persisted.gems };
 }
 
 async function persist(): Promise<void> {
@@ -74,17 +87,20 @@ export function refreshDay(): void {
 }
 
 /**
- * Kerää arkun: merkitsee slotin kerätyksi, kasvattaa saldoa ja jatkaa putkea.
- * Palauttaa true, jos tämä oli päivän ensimmäinen keräys (putki karttui).
+ * Kerää arkun: merkitsee slotin kerätyksi, kasvattaa saldoa, jatkaa putkea
+ * ja arpoo arkusta löytyvän jalokiven talteen. Palauttaa päivän ensimmäisen
+ * keräyksen tiedon (putki karttui) ja löytyneen jalokiven.
  */
-export async function collectChest(id: string): Promise<boolean> {
+export async function collectChest(id: string): Promise<CollectResult> {
+	const gem = GEM_ORDER[Math.floor(Math.random() * GEM_ORDER.length)];
 	const chest = game.chests.find((c) => c.id === id);
-	if (!chest || chest.looted) return false;
+	if (!chest || chest.looted) return { firstToday: false, gem };
 
 	const today = game.day;
 	chest.looted = true;
 	persisted.lootedByDay[today] = [...(persisted.lootedByDay[today] ?? []), id];
 	persisted.totalCollected += 1;
+	persisted.gems[gem] = (persisted.gems[gem] ?? 0) + 1;
 
 	const firstToday = persisted.lastLootDay !== today;
 	if (firstToday) {
@@ -97,6 +113,7 @@ export async function collectChest(id: string): Promise<boolean> {
 
 	game.streak = persisted.streakCurrent;
 	game.total = persisted.totalCollected;
+	game.gems = { ...persisted.gems };
 	await persist();
-	return firstToday;
+	return { firstToday, gem };
 }

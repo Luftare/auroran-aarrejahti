@@ -8,14 +8,17 @@
 	import { distanceM, inRange } from '$lib/geo';
 	import Map from '$lib/components/Map.svelte';
 	import ChestOverlay from '$lib/components/ChestOverlay.svelte';
+	import CollectedGems from '$lib/components/CollectedGems.svelte';
 	import GemGallery from '$lib/components/GemGallery.svelte';
+	import { GEM_ORDER } from '$lib/components/gems3d';
 	import Flame from '@lucide/svelte/icons/flame';
 	import FlaskConical from '@lucide/svelte/icons/flask-conical';
 	import Gem from '@lucide/svelte/icons/gem';
 	import MapPin from '@lucide/svelte/icons/map-pin';
-	import Package from '@lucide/svelte/icons/package';
 
 	let openChestId = $state<string | null>(null);
+	// Kerättyjen jalokivien kokoelma (avautuu arkkuchipistä)
+	let gemsOpen = $state(false);
 	// Debug: avaa arkkunäkymän ilman kävelyä eikä tallenna keräystä
 	let debugChestOpen = $state(false);
 	// Debug: jalokivigalleria
@@ -77,12 +80,13 @@
 		{onchestclick}
 	/>
 
-	<!-- HUD: kerätyt vasemmalla, putki oikealla (näkyy ensimmäisestä aarteesta) -->
+	<!-- HUD: kerätyt vasemmalla (avaa jalokivikokoelman), putki oikealla
+	     (näkyy ensimmäisestä aarteesta) -->
 	<div class="hud">
-		<span class="chip" title={fi.collected}>
-			<Package size={18} color="var(--aurora-teal)" />
+		<button class="chip" title={fi.collected} onclick={() => (gemsOpen = true)}>
+			<img class="chip-chest" src="/arkku.png" alt="" width="22" height="22" />
 			{game.total}
-		</span>
+		</button>
 		{#if game.total > 0}
 			<span class="chip" title={fi.streak}>
 				<Flame size={18} color="var(--gold)" fill="var(--gold)" />
@@ -143,9 +147,16 @@
 	{:else if debugChestOpen}
 		<ChestOverlay
 			streak={game.streak || 1}
-			oncollect={async () => true}
+			oncollect={async () => ({
+				firstToday: true,
+				gem: GEM_ORDER[Math.floor(Math.random() * GEM_ORDER.length)]
+			})}
 			onback={() => (debugChestOpen = false)}
 		/>
+	{/if}
+
+	{#if gemsOpen}
+		<CollectedGems gems={game.gems} onclose={() => (gemsOpen = false)} />
 	{/if}
 
 	{#if debugGemsOpen}
@@ -184,6 +195,9 @@
 
 	/* Putki on aina oikeassa reunassa, vaikka keräyschippi puuttuisi */
 	.chip:first-child { margin-right: auto; }
+
+	button.chip { pointer-events: auto; color: var(--text); }
+	.chip-chest { display: block; }
 
 	.debug-btn {
 		position: absolute;

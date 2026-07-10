@@ -5,8 +5,9 @@
 
 	import { onDestroy, onMount } from 'svelte';
 	import { fi } from '$lib/fi';
+	import type { CollectResult } from '$lib/game/state.svelte';
 	import { createChest, type ChestRig } from './chest3d';
-	import { createGemView, GEM_ORDER, type GemGalleryRig, type GemKind } from './gems3d';
+	import { createGemView, type GemGalleryRig, type GemKind } from './gems3d';
 
 	const TAPS_TO_OPEN = 3;
 	const REWARD_AT_MS = 950; // ruutu on musta, kun näkymä vaihtuu
@@ -18,8 +19,8 @@
 		onback
 	}: {
 		streak: number;
-		/** Merkitsee arkun kerätyksi; palauttaa true jos päivän ensimmäinen. */
-		oncollect: () => Promise<boolean>;
+		/** Merkitsee arkun kerätyksi; palauttaa putkitiedon ja löytyneen kiven. */
+		oncollect: () => Promise<CollectResult>;
 		onback: () => void;
 	} = $props();
 
@@ -27,7 +28,7 @@
 	let gemCanvas = $state<HTMLCanvasElement | null>(null);
 	let rig: ChestRig | null = null;
 	let gemRig: GemGalleryRig | null = null;
-	let gemKind: GemKind = GEM_ORDER[Math.floor(Math.random() * GEM_ORDER.length)];
+	let gemKind: GemKind = 'harmaa';
 	let tapsDone = $state(0);
 	let phase = $state<'tapping' | 'diving' | 'reward'>('tapping');
 	let firstToday = $state(false);
@@ -56,7 +57,9 @@
 		tapsDone += 1;
 		if (tapsDone >= TAPS_TO_OPEN) {
 			navigator.vibrate?.([40, 60, 120]);
-			firstToday = await oncollect();
+			const result = await oncollect();
+			firstToday = result.firstToday;
+			gemKind = result.gem;
 			phase = 'diving';
 			rig?.open();
 			fading = true;

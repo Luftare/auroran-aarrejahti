@@ -30,6 +30,8 @@ export const fi = {
 	// HUD
 	streak: 'Putki',
 	collected: 'Kerätyt aarteet',
+	gemsTitle: 'Kerätyt jalokivet',
+	noGems: 'Ei vielä jalokiviä — avaa aarrearkkuja!',
 
 	// Suunnan ohje
 	rotatePortrait: 'Käännä laite pystyasentoon.',
