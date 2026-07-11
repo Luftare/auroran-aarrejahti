@@ -1,6 +1,6 @@
 <script lang="ts">
-	// Kerättyjen jalokivien kokoelma: pelaajan omistamat kivet
-	// harvinaisuusjärjestyksessä, lukumäärä merkittynä kun niitä on useampia.
+	// Collection of gathered gems: the gems the player owns
+	// in rarity order, with a count shown when there is more than one.
 
 	import { fi } from '$lib/fi';
 	import { createGemView, GEM_ORDER, type GemKind } from './gems3d';
@@ -15,7 +15,7 @@
 
 	const owned = $derived(GEM_ORDER.filter((kind) => (gems[kind] ?? 0) > 0));
 
-	/** Svelte-action: elää canvasin mukana — rig syntyy ja tuhoutuu siistiksi. */
+	/** Svelte action: lives with the canvas — the rig is created and disposed of cleanly. */
 	function gemview(canvas: HTMLCanvasElement, kind: GemKind) {
 		const rig = createGemView(canvas, kind);
 		return { destroy: () => rig.dispose() };

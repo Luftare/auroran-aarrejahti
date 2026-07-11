@@ -1,5 +1,5 @@
-// Kaikki pelin data säilytetään IndexedDB:ssä tällä laitteella —
-// selaimen tietojen tyhjentäminen nollaa pelin.
+// All game data is stored in IndexedDB on this device —
+// clearing browser data resets the game.
 
 const DB_NAME = 'auroran-aarrejahti';
 const STORE = 'avaimet';

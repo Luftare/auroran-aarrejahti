@@ -1,6 +1,6 @@
 declare global {
 	namespace App {
-		// Asiakaspuolen peli — ei palvelinkohtaisia tyyppejä.
+		// Client-side game — no server-specific types.
 	}
 }
 

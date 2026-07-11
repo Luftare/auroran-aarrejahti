@@ -4,10 +4,10 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig, type Plugin } from 'vite';
 
 /**
- * Kätköpaikkaeditorin tallennuspää: /editori-sivu POSTaa merkityt paikat
- * tänne, ja tämä kirjoittaa ne suoraan src/lib/game/chests.ts-tiedoston
- * SLOTS-lohkoon. Toimii vain kehityspalvelimella — tuotannossa paikat
- * ovat kovakoodattuja (MVP).
+ * Save endpoint for the chest-slot editor: the /editori page POSTs the
+ * marked locations here, and this writes them straight into the SLOTS
+ * block of src/lib/game/chests.ts. Works only on the dev server — in
+ * production the locations are hardcoded (MVP).
  */
 function slotEditor(): Plugin {
 	return {

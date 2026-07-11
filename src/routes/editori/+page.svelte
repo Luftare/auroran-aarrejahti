@@ -1,10 +1,10 @@
 <script lang="ts">
-	// Kätköpaikkaeditori (kehitystyökalu): merkitse mahdolliset aarrepaikat
-	// kartalle. Tallennus kirjoittaa paikat suoraan repositorioon
-	// (src/lib/game/chests.ts) kehityspalvelimen kautta.
+	// Chest-slot editor (dev tool): mark potential treasure locations
+	// on the map. Saving writes the locations straight into the repository
+	// (src/lib/game/chests.ts) via the dev server.
 	//
-	// Napauta karttaa = lisää paikka · raahaa merkkiä = siirrä ·
-	// napauta merkkiä = poista.
+	// Tap the map = add a location · drag a marker = move ·
+	// tap a marker = remove.
 
 	import { onDestroy, onMount } from 'svelte';
 	import maplibregl from 'maplibre-gl';
@@ -42,7 +42,7 @@
 				const pos = marker.getLngLat();
 				slots[i] = { lat: pos.lat, lng: pos.lng };
 				dirty = true;
-				// dragged-lippu nollataan vasta klikin jälkeen (click seuraa dragendia)
+				// the dragged flag is cleared only after the click (click follows dragend)
 				setTimeout(() => (dragged = false), 0);
 			});
 			el.addEventListener('click', (e) => {
@@ -56,9 +56,9 @@
 		});
 	}
 
-	// Tallennus kirjoittaa chests.ts:n → HMR lataa sivun uudelleen. Kartan
-	// näkymä säilytetään istuntomuistissa, jotta editointi jatkuu samasta
-	// kohdasta ja zoomista.
+	// Saving writes chests.ts → HMR reloads the page. The map view is kept
+	// in session storage so editing resumes from the same position and
+	// zoom level.
 	const VIEW_KEY = 'editori-nakyma';
 
 	function savedView(): { center: [number, number]; zoom: number } | null {
@@ -76,7 +76,7 @@
 
 	onMount(() => {
 		const view = savedView();
-		// Editorikartta pitää nimistön näkyvissä — paikkoja on helpompi valita
+		// The editor map keeps place names visible — locations are easier to pick
 		map = new maplibregl.Map({
 			container,
 			style: 'https://tiles.openfreemap.org/styles/liberty',
@@ -84,8 +84,8 @@
 			zoom: view?.zoom ?? 14,
 			attributionControl: { compact: true }
 		});
-		// Tuplaklikkauszoomi laukaisisi kaksi click-tapahtumaa → kaksi
-		// vahinkopistettä; zoomaus rullalla, nipistyksellä tai +/-näppäimillä
+		// Double-click zoom would fire two click events → two accidental
+		// points; zoom with the wheel, pinch, or the +/- keys instead
 		map.doubleClickZoom.disable();
 		map.on('moveend', () => {
 			if (!map) return;
@@ -207,7 +207,7 @@
 	.ok { color: var(--aurora-green); }
 	.error { color: var(--danger); }
 
-	/* Numeroitu paikkamerkki */
+	/* Numbered location marker */
 	:global(.slot-marker) {
 		width: 30px;
 		height: 30px;

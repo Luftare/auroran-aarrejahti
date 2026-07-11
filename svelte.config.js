@@ -5,7 +5,7 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
-		// Pelkkiä staattisia tiedostoja — peli elää kokonaan selaimessa.
+		// Static files only — the game lives entirely in the browser.
 		adapter: adapter()
 	}
 };

@@ -1,7 +1,7 @@
-// Proseduraalinen 3D-aarrearkku arkunavausnäkymään. Tyyli: lämmin
-// oranssi lankkupuu, järeät kivenharmaat vanteet, kahdeksankulmainen
-// lukkolevy — pelillinen ja pehmeän kulmikas. Malli rakennetaan koodissa,
-// jotta peli pysyy pelkkinä staattisina tiedostoina ilman mallitiedostoja.
+// Procedural 3D treasure chest for the chest-opening view. Style: warm
+// orange plank wood, hefty stone-gray bands, an octagonal
+// lock plate — game-like and softly angular. The model is built in code
+// so the game stays as pure static files with no model assets.
 
 import {
 	ACESFilmicToneMapping,
@@ -28,9 +28,9 @@ import {
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 export type ChestRig = {
-	/** Ravistus + puristus — napautuksen palaute. */
+	/** Shake + squash — tap feedback. */
 	tap: () => void;
-	/** Kansi aukeaa jousimaisella liikkeellä. */
+	/** The lid opens with a springy motion. */
 	open: () => void;
 	dispose: () => void;
 };
@@ -39,9 +39,9 @@ const WOOD_DARK = 0xa8591e;
 const KEYHOLE = 0x1e2126;
 
 /**
- * Piirtoperäinen sarjakuvamainen puusyytekstuuri: aaltoilevia syyviivoja,
- * vaaleita valojuovia ja muutama oksankohta. Piirretään canvasille ajon
- * aikana — ei ladattavia kuvatiedostoja.
+ * Hand-drawn-style cartoonish wood grain texture: wavy grain lines,
+ * light highlight streaks and a few knots. Drawn onto a canvas at
+ * runtime — no image files to load.
  */
 function makeWoodTexture(vertical = false): CanvasTexture {
 	const size = 512;
@@ -57,7 +57,7 @@ function makeWoodTexture(vertical = false): CanvasTexture {
 	g.fillStyle = '#d97c2e';
 	g.fillRect(0, 0, size, size);
 
-	// Syyviivat: leveitä, aaltoilevia, vaihtelevan tummia
+	// Grain lines: wide, wavy, of varying darkness
 	for (let i = 0; i < 26; i++) {
 		const y = (i + Math.random() * 0.8) * (size / 26);
 		g.strokeStyle = `rgba(140, 68, 18, ${0.16 + Math.random() * 0.24})`;
@@ -74,7 +74,7 @@ function makeWoodTexture(vertical = false): CanvasTexture {
 		g.stroke();
 	}
 
-	// Valojuovat: kapeita, lämpimän vaaleita
+	// Highlight streaks: narrow, warm and light
 	for (let i = 0; i < 10; i++) {
 		const y = Math.random() * size;
 		g.strokeStyle = `rgba(255, 189, 110, ${0.18 + Math.random() * 0.2})`;
@@ -85,7 +85,7 @@ function makeWoodTexture(vertical = false): CanvasTexture {
 		g.stroke();
 	}
 
-	// Oksankohdat: sisäkkäisiä renkaita
+	// Knots: nested rings
 	for (let i = 0; i < 5; i++) {
 		const x = Math.random() * size;
 		const y = Math.random() * size;
@@ -110,8 +110,8 @@ function makeWoodTexture(vertical = false): CanvasTexture {
 }
 
 /**
- * Sarjakuvamainen kulunut metalli: läikikäs harmaa pinta, vaaleita
- * naarmuja ja tummia koloja. Piirretään canvasille ajon aikana.
+ * Cartoonish worn metal: a mottled gray surface, light scratches
+ * and dark pits. Drawn onto a canvas at runtime.
  */
 function makeMetalTexture(): CanvasTexture {
 	const size = 512;
@@ -122,7 +122,7 @@ function makeMetalTexture(): CanvasTexture {
 	g.fillStyle = '#7c8494';
 	g.fillRect(0, 0, size, size);
 
-	// Läikikkyys: pehmeitä vaaleita ja tummia laikkuja
+	// Mottling: soft light and dark blotches
 	for (let i = 0; i < 46; i++) {
 		const x = Math.random() * size;
 		const y = Math.random() * size;
@@ -135,7 +135,7 @@ function makeMetalTexture(): CanvasTexture {
 		g.fillRect(x - r, y - r, r * 2, r * 2);
 	}
 
-	// Naarmut: ohuita vinoja viiruja, enimmäkseen vaaleita
+	// Scratches: thin diagonal streaks, mostly light
 	for (let i = 0; i < 16; i++) {
 		const x = Math.random() * size;
 		const y = Math.random() * size;
@@ -152,7 +152,7 @@ function makeMetalTexture(): CanvasTexture {
 		g.stroke();
 	}
 
-	// Kolot ja pisteet
+	// Pits and specks
 	for (let i = 0; i < 70; i++) {
 		const x = Math.random() * size;
 		const y = Math.random() * size;
@@ -178,14 +178,14 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 	const camera = new PerspectiveCamera(35, 1, 0.1, 50);
 	const CAMERA_BASE = new Vector3(3.1, 2.6, 4.7);
 	const LOOK_AT = new Vector3(0, 0.8, 0);
-	// Vaakasuuntainen kuvakulma pidetään vakiona: kapealla pystyruudulla
-	// pystykulmaa avataan, jottei arkku pursua yli reunojen
+	// The horizontal field of view is kept constant: on a narrow portrait
+	// screen the vertical angle is widened so the chest doesn't spill past the edges
 	const H_FOV_RAD = (32 * Math.PI) / 180;
 	camera.position.copy(CAMERA_BASE);
 	camera.lookAt(LOOK_AT);
 
-	// Dramaattinen valaistus: niukka pohjavalo, lämmin kohdevalo ylhäältä,
-	// kylmä violetti vastavalo takaa — arkku nousee pimeydestä
+	// Dramatic lighting: scant base light, a warm spotlight from above,
+	// a cold violet rim light from behind — the chest rises out of darkness
 	scene.add(new HemisphereLight(0xbfd4e0, 0x10141c, 0.3));
 	scene.add(new AmbientLight(0xffffff, 0.04));
 	const spot = new SpotLight(0xffe9c4, 45, 0, Math.PI / 5.5, 0.6, 1.6);
@@ -200,29 +200,29 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 	scene.add(rim);
 
 	const woodTex = makeWoodTexture();
-	const woodTexArch = makeWoodTexture(true); // kannen holvissa syyt kulkevat akselin suuntaan
+	const woodTexArch = makeWoodTexture(true); // on the lid arch the grain runs along the axis
 	woodTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 	woodTexArch.anisotropy = woodTex.anisotropy;
 
 	const wood = new MeshStandardMaterial({ map: woodTex, roughness: 0.85, metalness: 0 });
 	const woodArch = new MeshStandardMaterial({ map: woodTexArch, roughness: 0.85, metalness: 0 });
-	// Tummat puuosat: sama syykuvio himmennettynä sävytyksellä
+	// Dark wood parts: the same grain pattern dimmed with a tint
 	const woodDark = new MeshStandardMaterial({ color: 0x9a8578, map: woodTex, roughness: 0.9, metalness: 0 });
 	const metalTex = makeMetalTexture();
 	metalTex.anisotropy = woodTex.anisotropy;
 	const metal = new MeshStandardMaterial({ map: metalTex, roughness: 0.55, metalness: 0.25 });
-	// Tummat metalliosat: sama kulunut pinta himmennettynä sävytyksellä
+	// Dark metal parts: the same worn surface dimmed with a tint
 	const metalDark = new MeshStandardMaterial({ color: 0xa3a3a3, map: metalTex, roughness: 0.6, metalness: 0.25 });
 	const dark = new MeshStandardMaterial({ color: KEYHOLE, roughness: 0.7, metalness: 0 });
 
 	const chest = new Group();
 	scene.add(chest);
 
-	// --- Runko: lankut näkyvät ohuina urina rungon pinnassa ---
+	// --- Body: the planks show as thin grooves in the body surface ---
 	const BODY_W = 2.0;
 	const BODY_H = 1.0;
 	const BODY_D = 1.35;
-	const BODY_Y = 0.62; // rungon keskikorkeus (jalkojen päällä)
+	const BODY_Y = 0.62; // center height of the body (on top of the feet)
 
 	const body = new Mesh(new RoundedBoxGeometry(BODY_W, BODY_H, BODY_D, 3, 0.07), wood);
 	body.position.y = BODY_Y;
@@ -235,7 +235,7 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 		chest.add(groove);
 	}
 
-	// --- Kivijalusta ja kulmatassut ---
+	// --- Stone base and corner feet ---
 	const base = new Mesh(new RoundedBoxGeometry(BODY_W + 0.14, 0.16, BODY_D + 0.14, 2, 0.05), metalDark);
 	base.position.y = 0.1;
 	chest.add(base);
@@ -248,13 +248,13 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 		}
 	}
 
-	// --- Vaakavanne ja lukko rungon yläreunassa ---
+	// --- Horizontal band and lock at the top edge of the body ---
 	const LOCK_Y = BODY_Y + 0.36;
 	const band = new Mesh(new RoundedBoxGeometry(BODY_W + 0.1, 0.24, BODY_D + 0.1, 2, 0.04), metal);
 	band.position.y = LOCK_Y;
 	chest.add(band);
 
-	// Kahdeksankulmainen lukkolevy + avaimenreikä
+	// Octagonal lock plate + keyhole
 	const plate = new Mesh(new CylinderGeometry(0.3, 0.3, 0.09, 8), metal);
 	plate.rotation.x = Math.PI / 2;
 	plate.rotation.y = Math.PI / 8;
@@ -275,15 +275,15 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 	keyholeSlot.position.set(0, LOCK_Y - 0.04, BODY_D / 2 + 0.13);
 	chest.add(keyholeSlot);
 
-	// --- Kansi: puinen holvikaari, saranat takareunassa ---
+	// --- Lid: a wooden barrel arch, hinges at the back edge ---
 	const LID_R = BODY_D / 2;
 	const HINGE_Y = BODY_Y + BODY_H / 2;
 	const lid = new Group();
 	lid.position.set(0, HINGE_Y, -BODY_D / 2);
 	chest.add(lid);
 
-	// Sylinterin akseli kääntyy leveyssuuntaan (X) ja kaari osoittaa ylös —
-	// sama suunta kuin päätyvanteilla
+	// The cylinder axis is turned to run widthwise (X) and the arch points up —
+	// the same orientation as the end hoops
 	const arch = new Mesh(
 		new CylinderGeometry(LID_R, LID_R, BODY_W, 24, 1, false, 0, Math.PI),
 		woodArch
@@ -292,12 +292,12 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 	arch.position.set(0, 0, LID_R);
 	lid.add(arch);
 
-	// Kannen pohjalevy sulkee holvin alapinnan
+	// The lid's bottom plate closes the underside of the arch
 	const lidBottom = new Mesh(new RoundedBoxGeometry(BODY_W, 0.08, BODY_D, 1, 0.03), woodDark);
 	lidBottom.position.set(0, 0.02, LID_R);
 	lid.add(lidBottom);
 
-	// Holvin päätykannet
+	// End caps of the arch
 	for (const sx of [-1, 1]) {
 		const cap = new Mesh(new CircleGeometry(LID_R - 0.01, 24, 0, Math.PI), woodDark);
 		cap.rotation.y = (sx * Math.PI) / 2;
@@ -305,7 +305,7 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 		lid.add(cap);
 	}
 
-	// Järeät kaarivanteet kannen päissä
+	// Hefty arched hoops at the ends of the lid
 	for (const x of [-(BODY_W / 2 - 0.11), BODY_W / 2 - 0.11]) {
 		const hoop = new Mesh(new TorusGeometry(LID_R - 0.01, 0.105, 12, 24, Math.PI), metal);
 		hoop.rotation.y = Math.PI / 2;
@@ -313,8 +313,8 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 		lid.add(hoop);
 	}
 
-	// Ontto sisus: mustat levyt kannen alapinnassa ja rungon suuaukossa —
-	// kannen raottuessa rako näyttää syvältä ja pimeältä
+	// Hollow interior: black plates on the underside of the lid and in the
+	// body opening — when the lid cracks open the gap looks deep and dark
 	const hollow = new MeshBasicMaterial({ color: 0x000000 });
 	const bodyOpening = new Mesh(
 		new RoundedBoxGeometry(BODY_W - 0.18, 0.05, BODY_D - 0.18, 1, 0.02),
@@ -330,7 +330,7 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 	lidHollow.position.set(0, -0.035, LID_R);
 	lid.add(lidHollow);
 
-	// --- Pystyvanteet rungon etu- ja takapinnalla kaarien jatkeena ---
+	// --- Vertical straps on the front and back faces of the body, continuing the arches ---
 	for (const x of [-(BODY_W / 2 - 0.14), BODY_W / 2 - 0.14]) {
 		for (const z of [BODY_D / 2 + 0.03, -(BODY_D / 2 + 0.03)]) {
 			const strap = new Mesh(new RoundedBoxGeometry(0.22, BODY_H + 0.06, 0.07, 1, 0.025), metal);
@@ -339,7 +339,7 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 		}
 	}
 
-	// --- Niitit vanteissa ---
+	// --- Rivets on the straps ---
 	const rivetGeo = new SphereGeometry(0.045, 12, 12);
 	for (const x of [-(BODY_W / 2 - 0.14), BODY_W / 2 - 0.14]) {
 		for (const y of [BODY_Y - 0.25, BODY_Y + 0.15]) {
@@ -354,26 +354,26 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 		chest.add(rivet);
 	}
 
-	// --- Animaatio ---
+	// --- Animation ---
 	let raf = 0;
 	let disposed = false;
 	let shakeStart = -1;
-	let hitSide = 1; // iskun kallistussuunta vaihtelee
+	let hitSide = 1; // the tilt direction of the hit varies
 	let spinStart = -1;
 	let openStart = -1;
 	const SHAKE_DUR = 0.33;
-	const SPIN_DUR = 1; // täysi kierros pystyakselin ympäri joka osumalla
-	// Avaus: kansi raottuu verkkaisesti ~20°:een — se on juuri auennut, kun
-	// kamera syöksyy raosta arkun pimeään sisään; käyttöliittymäkerros
-	// häivyttää mustaan ennen perille pääsyä
+	const SPIN_DUR = 1; // a full turn around the vertical axis on every hit
+	// Opening: the lid cracks open leisurely to ~20° — it has just opened when
+	// the camera dives through the gap into the chest's dark interior; the UI
+	// layer fades to black before we get there
 	const DIVE_DUR = 1.0;
 	const DIVE_END = new Vector3(0, BODY_Y + BODY_H / 2 + 0.08, -0.05);
 	const DIVE_LOOK = new Vector3(0, BODY_Y + BODY_H / 2 - 0.2, -0.6);
 	const LID_CRACK = -(20 * Math.PI) / 180; // ~20°
 	const lookTarget = new Vector3();
 
-	/* Vaimennettu jousi: menee yli, kimpoaa hieman takaisin toiseen
-	   suuntaan ja asettuu — kuin jousen varassa. */
+	/* Damped spring: overshoots, bounces back a little in the other
+	   direction and settles — as if riding on a spring. */
 	function dampedSpring(t: number): number {
 		if (t >= 1) return 1;
 		return 1 - Math.exp(-6.5 * t) * Math.cos(9 * t);
@@ -383,7 +383,7 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 		if (disposed) return;
 		const now = nowMs / 1000;
 
-		// Koko: seurataan canvasin CSS-kokoa
+		// Size: track the canvas's CSS size
 		const w = canvas.clientWidth;
 		const h = canvas.clientHeight;
 		if (w > 0 && h > 0) {
@@ -397,15 +397,15 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 			}
 		}
 
-		// Perusasento + kevyt eläväinen huojunta (sukelluksessa arkku
-		// pysähtyy, jotta avaimenreikä pysyy paikallaan tähtäimessä)
+		// Base pose + a light lively sway (during the dive the chest
+		// stops so the keyhole stays fixed in the crosshairs)
 		const diving = openStart >= 0;
 		chest.rotation.set(0, diving ? 0 : Math.sin(now * 0.9) * 0.04, 0);
 		chest.position.y = diving ? 0 : Math.sin(now * 1.7) * 0.02;
 		chest.scale.set(1, 1, 1);
 
-		// Osuman pyörähdys: täysi kierros pystyakselin ympäri jousibouncella —
-		// yli, kimmahdus vastasuuntaan ja asettuminen
+		// Hit spin: a full turn around the vertical axis with a spring bounce —
+		// overshoot, rebound in the opposite direction, and settle
 		if (spinStart >= 0) {
 			const t = (now - spinStart) / SPIN_DUR;
 			if (t < 1) {
@@ -415,26 +415,26 @@ export function createChest(canvas: HTMLCanvasElement): ChestRig {
 			}
 		}
 
-		// Kamera: perusasento; avauksessa kiihtyvä sukellus avaimenreikään
+		// Camera: base pose; during the opening, an accelerating dive into the keyhole
 		camera.position.copy(CAMERA_BASE);
 		lookTarget.copy(LOOK_AT);
 		if (diving) {
 			const zt = Math.min((now - openStart) / DIVE_DUR, 1);
-			// Täysi vauhti heti alusta, kiihtyy silti loppua kohden
+			// Full speed right from the start, yet accelerating toward the end
 			const e = 0.5 * zt + 0.5 * zt * zt;
 			camera.position.lerpVectors(CAMERA_BASE, DIVE_END, e);
 			lookTarget.lerpVectors(LOOK_AT, DIVE_LOOK, Math.min(zt * 1.6, 1));
-			// Kansi raottuu verkkaisesti: alku hidas, avautuu vasta lopussa
+			// The lid cracks open leisurely: slow at first, only opening near the end
 			lid.rotation.x = LID_CRACK * zt * zt;
 		}
 
-		// Vasaraniskumainen osuma: terävä painauma, joka palautuu
-		// eksponentiaalisesti — ei pehmeää huojuntaa
+		// Hammer-blow-like hit: a sharp dip that recovers
+		// exponentially — no soft swaying
 		if (shakeStart >= 0) {
 			const t = now - shakeStart;
 			if (t < SHAKE_DUR) {
 				const amp = Math.exp(-t * 17);
-				const rattle = t < 0.12 ? Math.sin(t * 63) : 0; // lyhyt kova räminä
+				const rattle = t < 0.12 ? Math.sin(t * 63) : 0; // a short hard rattle
 				camera.position.y -= 0.09 * amp;
 				camera.position.x += rattle * 0.04 * amp;
 				chest.position.y -= 0.05 * amp;

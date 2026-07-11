@@ -1,15 +1,15 @@
-// Aarrearkkujen paikat ja päivittäinen deterministinen valinta.
+// Treasure chest locations and the daily deterministic selection.
 //
-// Kaikki pelaajat näkevät samat arkut ilman palvelinta: ennalta määritellyistä
-// paikkasloteista valitaan päivän arkut algoritmilla, jonka siemenenä on
-// päivämäärä. Sama päivä → sama siemen → sama valinta kaikilla laitteilla.
+// All players see the same chests without a server: the day's chests are
+// picked from predefined location slots by an algorithm seeded with the
+// date. Same day → same seed → same selection on every device.
 
 import { distanceM } from '$lib/geo';
 
 export type Slot = { id: string; lat: number; lng: number };
 export type Chest = Slot & { looted: boolean };
 
-/** Mahdolliset kätköpaikat. Lisää slotteja tänne — valinta-algoritmi skaalautuu. */
+/** Possible cache locations. Add slots here — the selection algorithm scales. */
 export const SLOTS: Slot[] = [
 	{ id: 'slotti-1', lat: 60.24568441474585, lng: 24.71077096390374 },
 	{ id: 'slotti-2', lat: 60.23938894811013, lng: 24.713676485644527 },
@@ -136,19 +136,19 @@ export const SLOTS: Slot[] = [
 	{ id: 'slotti-123', lat: 60.23360717317007, lng: 24.71572561449861 }
 ];
 
-/** Montako arkkua päivässä. */
+/** How many chests per day. */
 export const DAILY_COUNT = 6;
 
-/** "Kaukana" = tämä osuus slottien suurimmasta mahdollisesta parivälistä. */
+/** "Far" = this fraction of the largest possible pairwise slot distance. */
 const FAR_FRACTION = 0.7;
 
-/** Montako päivän arkuista arvotaan täysin vapaasti (saavat klusteroitua). */
+/** How many of the day's chests are drawn completely freely (allowed to cluster). */
 const FREE_PICKS = DAILY_COUNT - 2;
 
-/** Kuinka lähelle arkkua on käveltävä (metriä). */
+/** How close you must walk to a chest (meters). */
 export const LOOT_RADIUS_M = 15;
 
-/** Pelipäivä vaihtuu Helsingin keskiyöllä kaikilla pelaajilla. */
+/** The game day rolls over at Helsinki midnight for all players. */
 export function currentDay(now = new Date()): string {
 	return new Intl.DateTimeFormat('en-CA', {
 		timeZone: 'Europe/Helsinki',
@@ -158,7 +158,7 @@ export function currentDay(now = new Date()): string {
 	}).format(now);
 }
 
-/** xmur3-tiiviste: päivämäärämerkkijono → 32-bittinen siemen. */
+/** xmur3 hash: date string → 32-bit seed. */
 function seedFromDay(day: string): number {
 	let h = 1779033703 ^ day.length;
 	for (let i = 0; i < day.length; i++) {
@@ -170,7 +170,7 @@ function seedFromDay(day: string): number {
 	return (h ^= h >>> 16) >>> 0;
 }
 
-/** mulberry32: nopea deterministinen näennäissatunnaisgeneraattori. */
+/** mulberry32: a fast deterministic pseudo-random generator. */
 function mulberry32(seed: number): () => number {
 	let a = seed;
 	return () => {
@@ -182,7 +182,7 @@ function mulberry32(seed: number): () => number {
 	};
 }
 
-/** Slottien suurin mahdollinen pariväli (metriä) — lasketaan kerran. */
+/** The largest possible pairwise slot distance (meters) — computed once. */
 let maxPairDistCache = 0;
 function maxPairDist(): number {
 	if (maxPairDistCache === 0) {
@@ -206,16 +206,16 @@ function minDistTo(slot: Slot, group: Slot[]): number {
 }
 
 /**
- * Päivän arkkupaikat, klusteroitumista välttäen: ensimmäiset neljä arvotaan
- * täysin vapaasti (ne saavat sattua lähekkäin), mutta kaksi viimeistä
- * pakotetaan kauas niistä — vähintään ~70 % suurimmasta mahdollisesta
- * parivälistä. Näin vähintään yksi arkkupari on aina kaukana toisistaan,
- * eivätkä kaikki kuusi koskaan kasaudu samaan nurkkaan. Jos riittävän
- * kaukaisia ehdokkaita ei ole (vapaat neljä jo levittäytyvät koko alueelle),
- * otetaan kaukaisimmat tarjolla olevat.
+ * The day's chest locations, avoiding clustering: the first four are drawn
+ * completely freely (they may land close together), but the last two are
+ * forced far away from them — at least ~70% of the largest possible pairwise
+ * distance. This way at least one chest pair is always far apart, and all six
+ * never pile up in the same corner. If there are no candidates far enough
+ * away (the free four already spread across the whole area), the farthest
+ * ones available are taken.
  *
- * Kaikki valinnat käyttävät päivämäärästä siemennettyä determinististä
- * satunnaisuutta — sama päivä antaa samat paikat kaikille pelaajille.
+ * All picks use deterministic randomness seeded from the date — the same day
+ * gives the same locations to all players.
  */
 export function dailySlots(day: string): Slot[] {
 	const rng = mulberry32(seedFromDay(day));
@@ -236,7 +236,7 @@ export function dailySlots(day: string): Slot[] {
 		if (candidates.length > 0) {
 			picked.push(candidates[Math.floor(rng() * candidates.length)]);
 		} else {
-			// Ei tarpeeksi kaukaisia — otetaan kaukaisin jäljellä oleva
+			// None far enough — take the farthest remaining one
 			let best: Slot | null = null;
 			let bestDist = -1;
 			for (const s of rest) {

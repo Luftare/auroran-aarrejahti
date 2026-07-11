@@ -1,14 +1,14 @@
-// Pelaajan sijainti: GPS, jonka WASD-debug-liikkuminen ohittaa kehitystestausta
-// varten. Debug käynnistyy ensimmäisestä WASD-painalluksesta ja liikuttaa
-// pelaajaa offsetteina todellisen (tai oletus-) sijainnin päällä.
+// Player position: GPS, overridden by WASD debug movement for dev testing.
+// Debug mode kicks in on the first WASD keypress and moves the player as
+// offsets on top of the real (or fallback) position.
 
 import { geo, startWatching, stopWatching } from '$lib/client/geo.svelte';
 import { SLOTS } from './chests';
 
-/** Debug-kävelyn nopeus (m/s). Reipas vauhti, jotta arkkuvälit testaa sekunneissa. */
+/** Debug walk speed (m/s). Brisk pace so chest-to-chest gaps test in seconds. */
 const DEBUG_SPEED_MS = 300;
 
-/** Kun GPS:ää ei ole, debug-kävely alkaa ensimmäisen slotin pohjoispuolelta. */
+/** When there is no GPS, the debug walk starts north of the first slot. */
 const FALLBACK_START = { lat: SLOTS[0].lat + 0.0012, lng: SLOTS[0].lng };
 
 const M_PER_DEG_LAT = 111_320;
@@ -17,7 +17,7 @@ export const player = $state<{
 	lat: number | null;
 	lng: number | null;
 	accuracy: number;
-	/** gps = oikea sijainti; debug = WASD-ohjaus; none = ei vielä kumpaakaan */
+	/** gps = real position; debug = WASD control; none = neither yet */
 	source: 'none' | 'gps' | 'debug';
 	geoStatus: 'idle' | 'locating' | 'ok' | 'denied' | 'unavailable';
 }>({ lat: null, lng: null, accuracy: 0, source: 'none', geoStatus: 'idle' });
@@ -29,8 +29,8 @@ const held = new Set<string>();
 let rafId: number | null = null;
 let lastTick = 0;
 
-/** Vie geo-tilan (tai debug-offsetit) pelaajan sijaintiin. Kutsutaan
- *  komponentin $effectistä, jotta GPS-päivitykset valuvat läpi reaktiivisesti. */
+/** Applies the geo state (or debug offsets) to the player position. Called
+ *  from a component $effect so GPS updates flow through reactively. */
 export function syncPlayer(): void {
 	apply();
 }
@@ -68,8 +68,8 @@ function onKeyDown(e: KeyboardEvent): void {
 	if (!['w', 'a', 's', 'd'].includes(key)) return;
 	if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 	if (!debugBase) {
-		// Ensimmäinen painallus kytkee debug-tilan: lähtöpiste on nykyinen
-		// GPS-sijainti tai varapiste pelialueen laidalla.
+		// The first keypress enables debug mode: the starting point is the
+		// current GPS position or a fallback point at the edge of the play area.
 		debugBase =
 			player.source === 'gps' && player.lat != null && player.lng != null
 				? { lat: player.lat, lng: player.lng }

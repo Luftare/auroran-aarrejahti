@@ -37,15 +37,15 @@ sw.addEventListener('fetch', (event) => {
 	const url = new URL(event.request.url);
 	if (event.request.method !== 'GET') return;
 
-	// Karttalaatat: välimuisti ensin, päivitys taustalla. Järvenperä on pieni,
-	// joten pelialueen laatat pysyvät tarjolla myös katvealueilla.
+	// Map tiles: cache first, refresh in the background. Järvenperä is small,
+	// so the play area's tiles stay available even in dead zones.
 	if (TILE_HOSTS.includes(url.hostname)) {
 		event.respondWith(staleWhileRevalidate(event.request));
 		return;
 	}
 
-	// Sovelluksen kuori: välimuistista, verkosta varalta; navigaatiot verkosta,
-	// varalla välimuistin etusivu.
+	// App shell: from cache, network as fallback; navigations from the network,
+	// with the cached front page as fallback.
 	if (url.origin === location.origin) {
 		event.respondWith(
 			caches.match(event.request).then(

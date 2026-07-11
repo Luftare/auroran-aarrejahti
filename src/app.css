@@ -1,6 +1,6 @@
-/* Auroran aarrejahti — yötaivas ja revontulet.
-   Tyyli on täysin litteä ja reunaton: ei varjoja, ei hehkuja, ei reunaviivoja,
-   ei liukuvärejä. Pinnat erottuvat toisistaan vain taustavärein. Ks. src/CLAUDE.md. */
+/* Auroran aarrejahti — night sky and northern lights.
+   The style is completely flat and borderless: no shadows, no glows, no borders,
+   no gradients. Surfaces differ by background color only. See src/CLAUDE.md. */
 
 :root {
 	--bg: #0b1d26;
@@ -100,7 +100,7 @@ input {
 	color: var(--text);
 }
 
-/* Näppäimistökäytön kohdistusrengas on saavutettavuutta, ei koristelua */
+/* The keyboard focus ring is accessibility, not decoration */
 input:focus {
 	outline: 2px solid var(--aurora-teal);
 	outline-offset: 1px;
@@ -116,7 +116,7 @@ label {
 .error-text { color: var(--danger); font-size: 0.92rem; margin-top: 0.6rem; }
 .ok-text { color: var(--aurora-green); font-size: 0.92rem; margin-top: 0.6rem; }
 
-/* Vaakasuunnan estoruutu */
+/* Landscape-orientation blocker screen */
 .rotate-overlay { display: none; }
 
 @media (orientation: landscape) and (max-height: 500px) {

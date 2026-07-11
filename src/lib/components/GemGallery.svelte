@@ -1,6 +1,6 @@
 <script lang="ts">
-	// Debug-näkymä: kaikki jalokivet kerralla harvinaisuusjärjestyksessä
-	// (yleisin ylhäällä vasemmalla, harvinaisin alhaalla oikealla).
+	// Debug view: all gems at once in rarity order
+	// (most common top left, rarest bottom right).
 
 	import { onDestroy, onMount } from 'svelte';
 	import { fi } from '$lib/fi';

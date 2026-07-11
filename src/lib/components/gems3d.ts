@@ -1,9 +1,9 @@
-// Proseduraaliset 3D-jalokivet. Kuusi harvinaisuusluokkaa yleisimmästä
-// harvinaisimpaan: harmaa (kivi, jossa hohtavia valkoisia kiteitä),
-// vihreä (sirpale), sininen (maaginen pallo), violetti (kidesikermä),
-// oranssi (sirpale) ja punainen (sirpale). Jokainen säteilee mystisesti:
-// emissiivinen pinta, värillinen valo ja sykkivä hehkuhuntu.
-// Mallit rakennetaan koodissa — ei ladattavia tiedostoja.
+// Procedural 3D gems. Six rarity tiers from most common to
+// rarest: gray (a rock with glinting white crystals),
+// green (shard), blue (magical orb), violet (crystal cluster),
+// orange (shard) and red (shard). Each radiates mystically:
+// an emissive surface, a colored light and a pulsing glow halo.
+// The models are built in code — no files to load.
 
 import {
 	AdditiveBlending,
@@ -32,7 +32,7 @@ import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js'
 
 export type GemKind = 'harmaa' | 'vihrea' | 'sininen' | 'violetti' | 'oranssi' | 'punainen';
 
-/** Yleisimmästä harvinaisimpaan. */
+/** From most common to rarest. */
 export const GEM_ORDER: GemKind[] = ['harmaa', 'vihrea', 'sininen', 'violetti', 'oranssi', 'punainen'];
 
 const GEM_STYLE: Record<GemKind, { base: number; emissive: number; glow: number }> = {
@@ -44,7 +44,7 @@ const GEM_STYLE: Record<GemKind, { base: number; emissive: number; glow: number 
 	punainen: { base: 0xff4545, emissive: 0xc41212, glow: 0xff8a7a }
 };
 
-/** Pehmeä pyöreä hehkuläikkä sprite-huntua varten. */
+/** Soft round glow blob for the sprite halo. */
 function makeGlowTexture(): CanvasTexture {
 	const size = 128;
 	const cv = document.createElement('canvas');
@@ -61,7 +61,7 @@ function makeGlowTexture(): CanvasTexture {
 	return tex;
 }
 
-/** Terävä täplä: kova reuna, ei hehkuhuntua. */
+/** Sharp dot: a hard edge, no glow halo. */
 function makeDotTexture(): CanvasTexture {
 	const size = 64;
 	const cv = document.createElement('canvas');
@@ -76,7 +76,7 @@ function makeDotTexture(): CanvasTexture {
 	return tex;
 }
 
-/** Terävä nelisakarainen tähti: kovat reunat, ei hehkua. */
+/** Sharp four-pointed star: hard edges, no glow. */
 function makeStarTexture(): CanvasTexture {
 	const size = 64;
 	const cv = document.createElement('canvas');
@@ -102,7 +102,7 @@ function makeStarTexture(): CanvasTexture {
 	return tex;
 }
 
-/** Terävä säle: kapea pitkulainen timantti — sirpalemainen kipinä. */
+/** Sharp sliver: a narrow elongated diamond — a shard-like spark. */
 function makeSliverTexture(): CanvasTexture {
 	const size = 64;
 	const cv = document.createElement('canvas');
@@ -150,18 +150,18 @@ function gemMaterial(kind: GemKind, emissiveIntensity = 0.55): MeshStandardMater
 }
 
 /**
- * Epäsymmetrinen, monisärmäinen kide: venytetty ja rosoinen pistepilvi,
- * josta muodostetaan kupera kuori. Ei kahta samanlaista.
+ * An asymmetric, many-faceted crystal: a stretched, jagged point cloud
+ * turned into a convex hull. No two alike.
  */
 function shardGeometry(height: number, radius: number): ConvexGeometry {
 	const points: Vector3[] = [];
-	// Terävä kärki ja tylpempi kanta, molemmat selvästi sivussa akselilta —
-	// vino ryhti rikkoo timanttisymmetrian
+	// A sharp tip and a blunter base, both clearly off-axis —
+	// the slanted posture breaks the diamond symmetry
 	points.push(new Vector3(radius * (Math.random() * 0.9 - 0.2), height * 0.62, (Math.random() - 0.5) * radius * 0.6));
 	points.push(new Vector3(-radius * (Math.random() * 0.7), -height * 0.42, (Math.random() - 0.5) * radius * 0.5));
-	// Sivukärki: toinen pienempi piikki viistoon
+	// Side tip: a second, smaller spike at an angle
 	points.push(new Vector3(radius * 1.15, height * (0.05 + Math.random() * 0.2), radius * 0.3));
-	// Kaksi epäsäännöllistä särmäkehää eri korkeuksilla
+	// Two irregular facet rings at different heights
 	for (const [ringY, ringR, n] of [
 		[height * 0.2, radius, 5],
 		[-height * 0.14, radius * 0.8, 5]
@@ -183,12 +183,12 @@ function shardGeometry(height: number, radius: number): ConvexGeometry {
 
 export type GemHandle = {
 	group: Group;
-	/** Mystinen eläminen: pyöriminen, kellunta ja hehkun sykintä.
-	 *  Kamera tarvitaan pyrstönauhan suuntaamiseen katsojaa kohti. */
+	/** Mystical liveliness: rotation, floating and glow pulsing.
+	 *  The camera is needed to orient the tail ribbon toward the viewer. */
 	update: (t: number, camera: PerspectiveCamera) => void;
 };
 
-/** Satunnaisesti kallistetun kiertoradan kanta: u ja v virittävät ratatason. */
+/** Basis of a randomly tilted orbit: u and v span the orbital plane. */
 function orbitBasis(): { u: Vector3; v: Vector3 } {
 	const axis = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
 	if (axis.lengthSq() < 0.01) axis.set(0, 1, 0);
@@ -205,7 +205,7 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 	const group = new Group();
 	const phase = Math.random() * Math.PI * 2;
 
-	// Hehkuhuntu ja värillinen valo — yhteinen mystinen säteily
+	// Glow halo and colored light — the shared mystical radiance
 	const glowMat = new SpriteMaterial({
 		map: tex.glow,
 		color: style.glow,
@@ -215,8 +215,9 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 	});
 	const glow = new Sprite(glowMat);
 	glow.scale.setScalar(2.2);
+	glow.userData.rooli = 'hehku'; // the intro animation tells the glow apart from the sparks
 	group.add(glow);
-	// Valo kiven etuyläpuolella — keskellä se jäisi rungon sisään pimentoon
+	// Light above and in front of the gem — centered, it would be left in the dark inside the body
 	const light = new PointLight(style.glow, 4, 4, 1.8);
 	light.position.set(0.3, 0.55, 0.9);
 	group.add(light);
@@ -227,7 +228,7 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 	let crystalMats: MeshStandardMaterial[] = [];
 
 	if (kind === 'sininen') {
-		// Maaginen pallo: läpikuultava kuori ja kirkas ydin
+		// Magical orb: a translucent shell and a bright core
 		const shellMat = gemMaterial(kind, 0.35);
 		shellMat.flatShading = false;
 		shellMat.transparent = true;
@@ -245,9 +246,9 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 		const core = new Mesh(new IcosahedronGeometry(0.2, 2), coreMat);
 		spinner.add(core);
 	} else if (kind === 'violetti') {
-		// Kidesikermä: kuusikulmaisia pylväitä eri kulmissa
+		// Crystal cluster: hexagonal columns at different angles
 		const columns: [number, number, number, number][] = [
-			// [x, z, korkeus, kallistus]
+			// [x, z, height, tilt]
 			[0, 0, 0.62, 0],
 			[-0.16, 0.1, 0.4, 0.5],
 			[0.17, -0.06, 0.34, -0.55],
@@ -267,11 +268,11 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 			spinner.add(column);
 		}
 	} else {
-		// Sirpaleet: epäsymmetrinen monisärmäinen kide, kullakin värillä oma ryhti
+		// Shards: an asymmetric many-faceted crystal, each color with its own posture
 		const mat = gemMaterial(kind);
 		crystalMats.push(mat);
 		if (kind === 'harmaa') {
-			// Vaaleanharmaa kide — vihreän sukuinen mutta tanakampi ja eri ryhdissä
+			// Light gray crystal — kin to the green one but stockier and posed differently
 			const shard = new Mesh(shardGeometry(1.0, 0.36), mat);
 			shard.rotation.z = -0.2;
 			spinner.add(shard);
@@ -284,7 +285,7 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 			shard.rotation.z = -0.22;
 			spinner.add(shard);
 		} else {
-			// punainen: pisin ja kapein — harvinaisin sirpale
+			// punainen (red): the longest and narrowest — the rarest shard
 			const shard = new Mesh(shardGeometry(1.4, 0.26), mat);
 			shard.rotation.z = 0.1;
 			const splinter = new Mesh(shardGeometry(0.65, 0.15), mat);
@@ -294,8 +295,8 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 		}
 	}
 
-	// --- Kipinät / taikapöly: jokaisella kivellä oma luonne ja oma jälki:
-	// pehmeä hehku (glow), terävä täplä (dot) tai terävä tähti (star) ---
+	// --- Sparks / magic dust: each gem has its own character and its own trail:
+	// a soft glow (glow), a sharp dot (dot) or a sharp star (star) ---
 	function spawnSpark(size: number, map: CanvasTexture): { sprite: Sprite; mat: SpriteMaterial } {
 		const mat = new SpriteMaterial({
 			map,
@@ -308,6 +309,7 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 		});
 		const sprite = new Sprite(mat);
 		sprite.scale.setScalar(size);
+		sprite.userData.rooli = 'kipina';
 		group.add(sprite);
 		return { sprite, mat };
 	}
@@ -315,8 +317,8 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 	let updateSparks: (t: number, camera: PerspectiveCamera) => void = () => {};
 
 	if (kind === 'harmaa' || kind === 'vihrea') {
-		// Kipinät säteilevät ulospäin ja haipuvat hyvin pieninä terävinä
-		// pisteinä — harmaalla vain muutama ja verkkaisesti
+		// The sparks radiate outward and fade away as very small sharp
+		// dots — the gray gem has only a few, and at a leisurely pace
 		const count = kind === 'harmaa' ? 3 : 9;
 		const reach = kind === 'harmaa' ? 0.85 : 1.1;
 		const baseSize = 0.028;
@@ -334,8 +336,8 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 			}
 		};
 	} else if (kind === 'sininen') {
-		// Lempein: kipinät leijuvat hyvin hitaasti eri ratatasoissa ja
-		// suunnissa — kuin vedenalainen planetaarinen järjestelmä
+		// The gentlest: the sparks drift very slowly in different orbital planes
+		// and directions — like an underwater planetary system
 		const sparks = Array.from({ length: 7 }, () => {
 			const { u, v } = orbitBasis();
 			return {
@@ -358,8 +360,8 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 			}
 		};
 	} else if (kind === 'violetti') {
-		// Sisäinen salamointi: satunnainen kide leimahtaa kirkkaana silloin
-		// tällöin — valo tulee kiven sisältä, ei sen ympäriltä
+		// Internal lightning: a random crystal flashes bright every now
+		// and then — the light comes from inside the gem, not around it
 		let flashIdx = 0;
 		let flashStart = -10;
 		let nextFlash = 0.6;
@@ -378,9 +380,9 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 			light.intensity += 7 * boost;
 		};
 	} else if (kind === 'oranssi') {
-		// Kaksi komeettaa: terävä täplapää ja pyrstönä yksi kameraa kohti
-		// käännetty kolmionauha, joka kapenee ja haipuu kärkeä kohden.
-		// Nauhan pituus skaalautuu vapaasti historiapisteiden määrällä.
+		// Two comets: a sharp dot head and, as the tail, a single camera-facing
+		// triangle ribbon that narrows and fades toward the tip.
+		// The ribbon length scales freely with the number of history points.
 		const HISTORY = 90;
 		const comets = Array.from({ length: 2 }, (_, i) => {
 			const { u, v } = orbitBasis();
@@ -449,8 +451,8 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 			}
 		};
 	} else {
-		// punainen: satunnaisia purskeita teräviä säleitä — kuin kide sinkoaisi
-		// sirpaleita ympärilleen
+		// punainen (red): random bursts of sharp slivers — as if the crystal were
+		// flinging shards around itself
 		const sparks = Array.from({ length: 9 }, () => ({
 			...spawnSpark(0.1 + Math.random() * 0.06, tex.sliver),
 			dir: new Vector3(),
@@ -499,15 +501,24 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 
 export type GemGalleryRig = { dispose: () => void };
 
-/** Yksittäinen jalokivi keskitettynä — arkun avauksen palkintonäkymään. */
-export function createGemView(canvas: HTMLCanvasElement, kind: GemKind): GemGalleryRig {
+/**
+ * A single gem, centered — for the chest-opening reward view.
+ * In `intro` mode the gem appears as a small black silhouette, spins fast
+ * while slowing down and grows to full size over two seconds; the glow is
+ * gray in the meantime and the true colors are revealed only at the end.
+ */
+export function createGemView(
+	canvas: HTMLCanvasElement,
+	kind: GemKind,
+	opts: { intro?: boolean } = {}
+): GemGalleryRig {
 	const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true });
 	renderer.setClearColor(0x000000, 0);
 
 	const scene = new Scene();
 	scene.add(new HemisphereLight(0x8fa3b8, 0x1a2029, 0.85));
 
-	// Riittävän kaukana, ettei hehkuhuntu leikkaudu canvasin reunoihin
+	// Far enough away that the glow halo doesn't get clipped at the canvas edges
 	const camera = new PerspectiveCamera(35, 1, 0.1, 50);
 	camera.position.set(0, 0, 4.6);
 	const H_FOV_RAD = (30 * Math.PI) / 180;
@@ -516,12 +527,63 @@ export function createGemView(canvas: HTMLCanvasElement, kind: GemKind): GemGall
 	const gem = buildGem(kind, tex);
 	scene.add(gem.group);
 
+	// Intro: stash the original colors so they can be restored at the end
+	const INTRO_DUR = 2;
+	const INTRO_SPIN = 22; // rad/s at the start, decelerates to zero
+	let introDone = !opts.intro;
+	let startT: number | null = null;
+	const originals: { mat: MeshStandardMaterial; color: number; emissive: number }[] = [];
+	if (opts.intro) {
+		gem.group.traverse((obj) => {
+			if (obj instanceof Mesh) {
+				const mat = obj.material as MeshStandardMaterial;
+				originals.push({
+					mat,
+					color: mat.color.getHex(),
+					emissive: mat.emissive ? mat.emissive.getHex() : 0
+				});
+			}
+		});
+	}
+
+	function applyIntro(te: number): void {
+		const p = Math.min(te / INTRO_DUR, 1);
+		// Growth from tiny to full size, with a decelerating spin
+		const e = 1 - Math.pow(1 - p, 3);
+		gem.group.scale.setScalar(0.02 + 0.98 * e);
+		const ti = Math.min(te, INTRO_DUR);
+		gem.group.rotation.y = INTRO_SPIN * (ti - (ti * ti) / (2 * INTRO_DUR));
+
+		if (p < 1) {
+			for (const o of originals) {
+				o.mat.color.setHex(0x08090b);
+				o.mat.emissive?.setHex(0x000000);
+			}
+			gem.group.traverse((obj) => {
+				if (obj instanceof Sprite) {
+					const mat = obj.material as SpriteMaterial;
+					if (obj.userData.rooli === 'hehku') mat.color.setHex(0x8f97a1);
+					else mat.opacity = 0;
+				}
+			});
+		} else {
+			// The colors are revealed: restore the original materials
+			for (const o of originals) {
+				o.mat.color.setHex(o.color);
+				o.mat.emissive?.setHex(o.emissive);
+			}
+			gem.group.scale.setScalar(1);
+			introDone = true;
+		}
+	}
+
 	let raf = 0;
 	let disposed = false;
 
 	function frame(nowMs: number): void {
 		if (disposed) return;
 		const t = nowMs / 1000;
+		if (startT === null) startT = t;
 		const w = canvas.clientWidth;
 		const h = canvas.clientHeight;
 		if (w > 0 && h > 0) {
@@ -535,6 +597,7 @@ export function createGemView(canvas: HTMLCanvasElement, kind: GemKind): GemGall
 			}
 		}
 		gem.update(t, camera);
+		if (!introDone) applyIntro(t - startT);
 		renderer.render(scene, camera);
 		raf = requestAnimationFrame(frame);
 	}
@@ -560,7 +623,7 @@ export function createGemView(canvas: HTMLCanvasElement, kind: GemKind): GemGall
 	};
 }
 
-/** Debug-galleria: kaikki jalokivet kerralla, yleisin ylhäällä vasemmalla. */
+/** Debug gallery: all gems at once, the most common at the top left. */
 export function createGemGallery(canvas: HTMLCanvasElement): GemGalleryRig {
 	const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true });
 	renderer.setClearColor(0x000000, 0);

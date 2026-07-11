@@ -22,7 +22,7 @@
 		onchestclick: (id: string) => void;
 	} = $props();
 
-	const DEFAULT_CENTER: [number, number] = [24.7095, 60.2375]; // pelialueen keskellä
+	const DEFAULT_CENTER: [number, number] = [24.7095, 60.2375]; // center of the play area
 
 	let container: HTMLDivElement;
 	let map: maplibregl.Map | null = null;
@@ -31,7 +31,7 @@
 	let panned = $state(false);
 	let centeredOnce = false;
 
-	// 3D-arkkumallista renderöity kuva (static/arkku.png)
+	// Image rendered from the 3D chest model (static/arkku.png)
 	const CHEST_IMG = '<img src="/arkku.png" alt="" width="34" height="34" draggable="false" />';
 
 	onMount(() => {
@@ -44,8 +44,8 @@
 		});
 		map.on('dragstart', () => (panned = true));
 		map.touchPitch.disable();
-		// Pelikartalta karsitaan paikannimet ja karttasymbolit, mutta
-		// kadunnimet jätetään näkyviin — ne auttavat suunnistamaan arkuille.
+		// Place names and map symbols are stripped from the game map, but
+		// street names are kept visible — they help navigate to the chests.
 		map.on('style.load', () => {
 			if (!map) return;
 			for (const layer of [...map.getStyle().layers]) {
@@ -58,7 +58,7 @@
 
 	onDestroy(() => map?.remove());
 
-	// Pelaajan sijaintimerkki — kamera seuraa, kunnes pelaaja panoroi itse
+	// Player location marker — the camera follows until the player pans manually
 	$effect(() => {
 		if (!map || playerLat == null || playerLng == null) return;
 		if (!playerMarker) {
@@ -77,7 +77,7 @@
 		}
 	});
 
-	// Arkut ympyräthumbnaileina — kerätyt poistuvat kartalta
+	// Chests as circular thumbnails — collected ones disappear from the map
 	$effect(() => {
 		if (!map) return;
 		const visible = chests.filter((c) => !c.looted);
@@ -94,11 +94,11 @@
 			el.className = 'chest-thumb';
 			el.classList.toggle('in-range', chest.id === inRangeId);
 			el.setAttribute('aria-label', fi.tapToOpen);
-			// Animaatiot ja asemointi sisemmissä elementeissä: transform- tai
-			// position-muutos juurielementissä rikkoisi MapLibren sijoittelun.
-			// Rakenne: keskitetty varjo (makaa maassa) + ulospäin säteilevät
-			// kipinät (vrt. vihreän jalokiven efekti) + reunus + arkkukuva.
-			// Kaksi kipinäerää: pieniä täpliä ja pyörähteleviä nelisakaraisia tähtiä
+			// Animations and positioning live on inner elements: changing transform
+			// or position on the root element would break MapLibre's placement.
+			// Structure: centered shadow (lying on the ground) + outward-radiating
+			// sparks (cf. the green gem effect) + ring + chest image.
+			// Two batches of sparks: small dots and spinning four-pointed stars
 			const spark = (cls: string) => {
 				const angle = Math.random() * Math.PI * 2;
 				const dist = 44 + Math.random() * 18;
@@ -121,9 +121,9 @@
 		}
 	});
 
-	// Kantaman sisällä oleva arkku korostuu. Riippuvuus luetaan ennen
-	// silmukkaa: markkerikartta voi olla tyhjä ensimmäisellä ajolla, eikä
-	// efekti muuten rekisteröisi inRangeId:tä lainkaan.
+	// The chest within range is highlighted. The dependency is read before
+	// the loop: the marker map may be empty on the first run, and the
+	// effect would otherwise never register inRangeId at all.
 	$effect(() => {
 		const active = inRangeId;
 		for (const [id, marker] of chestMarkers) {
@@ -155,7 +155,7 @@
 		inset: 0;
 	}
 
-	/* Tilarivin yläpuolella, ettei alin painike jää sen alle */
+	/* Above the status row so the bottom button doesn't hide beneath it */
 	.controls {
 		position: absolute;
 		right: 1rem;
@@ -177,8 +177,8 @@
 		justify-content: center;
 	}
 
-	/* Arkku ympyräthumbnailina kartalla: leijuu varjonsa yllä ja sitä
-	   kiertää hohtava kultareunus — arvokas ja houkutteleva */
+	/* Chest as a circular thumbnail on the map: floats above its shadow,
+	   circled by a glowing gold ring — precious and enticing */
 	:global(.chest-thumb) {
 		cursor: pointer;
 		line-height: 0;
@@ -189,8 +189,8 @@
 		display: block;
 	}
 
-	/* Reunus samaa väriä kuin muut UI-napit — merkki istuu muuhun
-	   käyttöliittymään; kultatausta nostaa arkun arvokkaaksi */
+	/* Ring in the same color as the other UI buttons — the marker fits the
+	   rest of the interface; the gold background makes the chest precious */
 	:global(.chest-thumb-ring) {
 		position: relative;
 		display: block;
@@ -210,12 +210,12 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		overflow: hidden; /* kiiltopyyhkäisy leikkautuu ympyrään */
+		overflow: hidden; /* the glint sweep is clipped to the circle */
 	}
 
-	/* Kantamassa: aarre pomppaa 1,5-kertaiseksi ja heiluu silloin tällöin
-	   varovasti — kuin joululahja, jota ravistellaan uteliaana. Kullan yli
-	   pyyhkäisevä kiilto heilautuksen tahdissa kutsuu avaamaan. */
+	/* In range: the treasure pops to 1.5× and wiggles gently every now and
+	   then — like a Christmas present being shaken with curiosity. A glint
+	   sweeping over the gold in time with the wiggle invites opening. */
 	:global(.chest-thumb.in-range .chest-thumb-ring) {
 		animation:
 			present-pop 0.35s ease-out forwards,
@@ -243,8 +243,8 @@
 		animation: glint 2.2s 0.35s ease-in-out infinite;
 	}
 
-	/* Varjo: merkkiä pienempi ja hieman alaspäin siirretty — pilkistää
-	   arkun takaa ja alta, kuin merkki kohoaisi aavistuksen maasta */
+	/* Shadow: smaller than the marker and shifted slightly downward — peeks
+	   out from behind and below the chest, as if the marker hovered just above the ground */
 	:global(.chest-thumb-ground) {
 		position: absolute;
 		left: 50%;
@@ -257,9 +257,9 @@
 		background: radial-gradient(circle, rgba(6, 10, 14, 0.45) 45%, rgba(6, 10, 14, 0) 72%);
 	}
 
-	/* Ulospäin säteilevät kipinät: pieniä teräviä täpliä, jotka nousevat
-	   merkin takaa ja haipuvat matkalla — sama efekti kuin jalokivillä.
-	   Väri sama kuin reunuksella. */
+	/* Outward-radiating sparks: small sharp dots that rise from behind
+	   the marker and fade along the way — same effect as on the gems.
+	   Same color as the ring. */
 	:global(.chest-spark) {
 		position: absolute;
 		left: 50%;
@@ -280,7 +280,7 @@
 		100% { transform: translate(var(--dx), var(--dy)) scale(0.55); opacity: 0; }
 	}
 
-	/* Toinen erä: nelisakaraiset tähdet, jotka pyörähtävät lentäessään */
+	/* Second batch: four-pointed stars that spin as they fly */
 	:global(.chest-spark.star) {
 		width: 9px;
 		height: 9px;
@@ -297,14 +297,14 @@
 	}
 
 
-	/* Saapuminen: pieni ylitys ennen asettumista 1,5-kokoon */
+	/* Arrival: a small overshoot before settling at 1.5× size */
 	@keyframes present-pop {
 		0% { transform: scale(1); }
 		60% { transform: scale(1.64); }
 		100% { transform: scale(1.5); }
 	}
 
-	/* Enimmäkseen levossa; lyhyt hento heilautus kierroksen lopulla */
+	/* Mostly at rest; a short gentle wiggle near the end of the cycle */
 	@keyframes present-shake {
 		0%, 55% { transform: scale(1.5) rotate(0deg); }
 		61% { transform: scale(1.5) rotate(-6deg); }
@@ -314,14 +314,14 @@
 		85%, 100% { transform: scale(1.5) rotate(0deg); }
 	}
 
-	/* Kiilto pyyhkäisee kullan yli heilautuksen aikaan */
+	/* The glint sweeps over the gold in time with the wiggle */
 	@keyframes glint {
 		0%, 52% { left: -70%; }
 		78%, 100% { left: 130%; }
 	}
 
-	/* Valkoinen rengas on karttamerkin luettavuutta karttapohjaa vasten,
-	   ei käyttöliittymän koristelua */
+	/* The white ring is for map-marker legibility against the map base,
+	   not UI decoration */
 	:global(.player-dot) {
 		position: relative;
 		width: 22px;

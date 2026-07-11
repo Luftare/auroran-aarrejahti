@@ -1,9 +1,9 @@
-// Kaikki pelaajalle näkyvät tekstit. Ei kovakoodattuja tekstejä komponentteihin.
+// All player-visible texts. No hardcoded strings in components.
 
 export const fi = {
 	appName: 'Auroran aarrejahti',
 
-	// Sijainti
+	// Location
 	locating: 'Etsitään sijaintiasi…',
 	locationDenied:
 		'Peli tarvitsee sijaintisi löytääkseen aarteet. Salli sijainti selaimen asetuksista ja lataa sivu uudelleen.',
@@ -11,20 +11,20 @@ export const fi = {
 	locationNeeded: 'Peli tarvitsee sijaintisi toimiakseen.',
 	retry: 'Yritä uudelleen',
 
-	// Kartta
+	// Map
 	distanceToNearest: (dist: string) => `Lähin aarre on ${dist} päässä — kävele lähemmäs!`,
-	openTreasure: 'Avaa aarre!',
+	openTreasure: 'Avaa arkku!',
 	allLooted: 'Löysit kaikki tämän päivän aarteet! Uudet aarteet ilmestyvät keskiyöllä.',
 	recenter: 'Palaa omaan sijaintiin',
 	zoomIn: 'Lähennä',
 	zoomOut: 'Loitonna',
 
-	// Arkun avaaminen
-	tapToOpen: 'Napauta arkkua avataksesi sen!',
-	tapsLeft: (n: number) => (n === 1 ? 'Vielä yksi napautus!' : `Vielä ${n} napautusta`),
+	// Opening a chest — the chest holds the treasures
+	tapToOpen: 'Avaa arkku!',
+	showLoot: 'Näytä aarteet!',
+	next: 'Seuraava',
 	treasureFound: 'Aarre kerätty!',
-	streakContinues: (days: number) => `Putkesi jatkuu — ${days}. päivä!`,
-	streakStarted: 'Putkesi alkoi tänään!',
+	streakDays: 'päivän putki',
 	backToMap: 'Takaisin kartalle',
 
 	// HUD
@@ -33,22 +33,22 @@ export const fi = {
 	gemsTitle: 'Kerätyt jalokivet',
 	noGems: 'Ei vielä jalokiviä — avaa aarrearkkuja!',
 
-	// Suunnan ohje
+	// Orientation hint
 	rotatePortrait: 'Käännä laite pystyasentoon.',
 
-	// Kehitystyökalut
+	// Dev tools
 	debugChest: 'Kokeile arkun avausta (debug)',
 	debugGems: 'Näytä jalokivet (debug)',
 	close: 'Sulje',
 
-	// Kätköpaikkaeditori
+	// Chest-slot editor
 	editorTitle: 'Kätköpaikat',
 	editorSave: 'Tallenna',
 	editorHint: 'Napauta karttaa lisätäksesi · raahaa siirtääksesi · napauta merkkiä poistaaksesi',
 	editorSaved: (n: number) => `Tallennettu repositorioon — ${n} paikkaa.`,
 	editorSaveFailed: 'Tallennus epäonnistui. Editori toimii vain kehityspalvelimella (npm run dev).',
 
-	/** 200 m / 1,2 km — suomalainen muotoilu */
+	/** 200 m / 1,2 km — Finnish formatting */
 	formatDistance(meters: number): string {
 		if (meters < 1000) return `${Math.max(10, Math.round(meters / 10) * 10)} m`;
 		return `${(Math.round(meters / 100) / 10).toString().replace('.', ',')} km`;

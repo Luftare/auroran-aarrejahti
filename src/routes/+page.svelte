@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
+	import { page } from '$app/state';
 	import { fi } from '$lib/fi';
-	import { game, initGame, collectChest, refreshDay } from '$lib/game/state.svelte';
+	import { game, initGame, collectChest, refreshDay, rollLoot } from '$lib/game/state.svelte';
 	import { player, startPlayer, stopPlayer, syncPlayer } from '$lib/game/player.svelte';
 	import { geo } from '$lib/client/geo.svelte';
 	import { LOOT_RADIUS_M, type Chest } from '$lib/game/chests';
@@ -10,21 +11,22 @@
 	import ChestOverlay from '$lib/components/ChestOverlay.svelte';
 	import CollectedGems from '$lib/components/CollectedGems.svelte';
 	import GemGallery from '$lib/components/GemGallery.svelte';
-	import { GEM_ORDER } from '$lib/components/gems3d';
 	import Flame from '@lucide/svelte/icons/flame';
 	import FlaskConical from '@lucide/svelte/icons/flask-conical';
 	import Gem from '@lucide/svelte/icons/gem';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 
 	let openChestId = $state<string | null>(null);
-	// Kerättyjen jalokivien kokoelma (avautuu arkkuchipistä)
+	// Collection of gathered gems (opens from the chest chip)
 	let gemsOpen = $state(false);
-	// Debug: avaa arkkunäkymän ilman kävelyä eikä tallenna keräystä
+	// Debug: opens the chest view without walking and does not persist the collection
 	let debugChestOpen = $state(false);
-	// Debug: jalokivigalleria
+	// Debug: gem gallery
 	let debugGemsOpen = $state(false);
+	// Dev tools stay hidden unless the page is opened with ?debug
+	const debugMode = $derived(page.url.searchParams.has('debug'));
 
-	// GPS-päivitykset (tai debug-kävely) valuvat pelaajan sijaintiin
+	// GPS updates (or debug walking) flow into the player position
 	$effect(() => {
 		void geo.lat;
 		void geo.lng;
@@ -80,8 +82,8 @@
 		{onchestclick}
 	/>
 
-	<!-- HUD: kerätyt vasemmalla (avaa jalokivikokoelman), putki oikealla
-	     (näkyy ensimmäisestä aarteesta) -->
+	<!-- HUD: collected count on the left (opens the gem collection), streak on
+	     the right (visible from the first treasure onward) -->
 	<div class="hud">
 		<button class="chip" title={fi.collected} onclick={() => (gemsOpen = true)}>
 			<img class="chip-chest" src="/arkku.png" alt="" width="22" height="22" />
@@ -96,12 +98,12 @@
 	</div>
 
 	{#if inRangeChestId}
-		<!-- Aarre saavutettu: kehotus avaamaan ruudun alalaidassa -->
+		<!-- Treasure reached: open prompt at the bottom of the screen -->
 		<button class="btn btn-gold open-cta" onclick={() => (openChestId = inRangeChestId)}>
 			{fi.openTreasure}
 		</button>
 	{:else}
-		<!-- Tilarivi alhaalla: sijainnin tila tai etäisyys lähimpään aarteeseen -->
+		<!-- Status row at the bottom: location status or distance to the nearest treasure -->
 		<div class="hint">
 			{#if player.source === 'none'}
 				{#if player.geoStatus === 'denied'}
@@ -119,38 +121,37 @@
 		</div>
 	{/if}
 
-	<!-- Debug: arkun avauksen kokeilu ilman kävelyä (ei tallenna mitään) -->
-	<button class="debug-btn" onclick={() => (debugChestOpen = true)} aria-label={fi.debugChest}>
-		<FlaskConical size={18} />
-	</button>
+	{#if debugMode}
+		<!-- Debug: open the chest view without walking (does not persist anything) -->
+		<button class="debug-btn" onclick={() => (debugChestOpen = true)} aria-label={fi.debugChest}>
+			<FlaskConical size={18} />
+		</button>
 
-	<!-- Debug: jalokivigalleria -->
-	<button
-		class="debug-btn gems"
-		onclick={() => (debugGemsOpen = true)}
-		aria-label={fi.debugGems}
-	>
-		<Gem size={18} />
-	</button>
+		<!-- Debug: gem gallery -->
+		<button
+			class="debug-btn gems"
+			onclick={() => (debugGemsOpen = true)}
+			aria-label={fi.debugGems}
+		>
+			<Gem size={18} />
+		</button>
 
-	<!-- Kehitystyökalu: kätköpaikkaeditori -->
-	<a class="debug-btn editor" href="/editori" aria-label={fi.editorTitle}>
-		<MapPin size={18} />
-	</a>
+		<!-- Dev tool: chest-slot editor -->
+		<a class="debug-btn editor" href="/editori" aria-label={fi.editorTitle}>
+			<MapPin size={18} />
+		</a>
+	{/if}
 
 	{#if openChestId}
 		<ChestOverlay
 			streak={game.streak}
-			oncollect={() => collectChest(openChestId!)}
+			oncollect={(multiplier) => collectChest(openChestId!, multiplier)}
 			onback={() => (openChestId = null)}
 		/>
 	{:else if debugChestOpen}
 		<ChestOverlay
 			streak={game.streak || 1}
-			oncollect={async () => ({
-				firstToday: true,
-				gem: GEM_ORDER[Math.floor(Math.random() * GEM_ORDER.length)]
-			})}
+			oncollect={async (multiplier) => ({ firstToday: true, loot: rollLoot(multiplier) })}
 			onback={() => (debugChestOpen = false)}
 		/>
 	{/if}
@@ -193,7 +194,7 @@
 		font-size: 1.05rem;
 	}
 
-	/* Putki on aina oikeassa reunassa, vaikka keräyschippi puuttuisi */
+	/* The streak stays at the right edge even if the collected-count chip is missing */
 	.chip:first-child { margin-right: auto; }
 
 	button.chip { pointer-events: auto; color: var(--text); }
@@ -222,7 +223,7 @@
 		bottom: calc(11.4rem + env(safe-area-inset-bottom));
 	}
 
-	/* Tumma reunus erottaa napin vaaleasta karttapohjasta */
+	/* A dark ring separates the button from the light map base */
 	.open-cta {
 		position: absolute;
 		left: 50%;

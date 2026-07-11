@@ -1,88 +1,112 @@
-# Käyttöliittymän tyyliohje (frontend)
+# UI style guide (frontend)
 
-Koskee kaikkea pelaajalle näkyvää käyttöliittymää: `src/routes/`, `src/lib/components/`
-ja `src/app.css`.
+Applies to everything the player sees: `src/routes/`, `src/lib/components/`
+and `src/app.css`.
 
-## Arkkitehtuuri: ei palvelinta
+## Language: Finnish only in visible UI text
 
-Peli toimii kokonaan selaimessa ja julkaistaan staattisina tiedostoina. Kaikki pelidata
-(kerätyt arkut, putki, kokonaissaldo) säilyy IndexedDB:ssä (`src/lib/game/state.svelte.ts`).
-Päivän arkut valitaan deterministisesti päivämäärä siemenenä (`src/lib/game/chests.ts`) —
-älä lisää mitään, mikä vaatii palvelinyhteyttä (karttalaattoja lukuun ottamatta).
+- Everything the player can see is in Finnish: UI strings (all in `src/lib/fi.ts`,
+  never hardcoded in components) **and URL paths** — paths are visible text, so
+  routes are Finnish too (e.g. `/editori`).
+- Everything else is in English: code comments, docs, identifiers, commit messages
+  and other non-visible text.
 
-## Visuaalinen tyyli: täysin litteä ja reunaton
+## Architecture: no server
 
-Pelin ulkoasu on **erittäin litteä ja reunaton**. Tämä on tietoinen ja pysyvä valinta:
+The game runs entirely in the browser and ships as static files. All game data
+(collected chests, streak, total balance) lives in IndexedDB (`src/lib/game/state.svelte.ts`).
+The day's chests are picked deterministically with the date as seed (`src/lib/game/chests.ts`) —
+do not add anything that requires a server connection (map tiles excepted).
 
-- **Ei varjoja.** Ei `box-shadow`-, `text-shadow`- eikä `drop-shadow`-määrityksiä.
-- **Ei hehkuefektejä.** Ei glow-renkaita, ei hohtavia reunuksia, ei sädekehiä.
-- **Ei reunaviivoja.** Ei `border`- eikä `outline`-koristelua korteissa, napeissa,
-  kentissä tai paneeleissa. Pinnat erottuvat toisistaan vain taustaväreillä
-  (`--bg` → `--bg-raised` → `--bg-card` → `--bg-high`, tummimmasta vaaleimpaan).
-- **Ei liukuvärejä.** Napit ja pinnat ovat yksivärisiä (`--aurora-green`, `--gold` jne.).
-- Valitun tilan korostus tehdään täytöllä (taustavärin vaihto), ei reunalla.
+## Visual style: completely flat and borderless
 
-Sallitut poikkeukset — toiminnallisuutta, ei koristelua:
+The game's look is **extremely flat and borderless**. This is a deliberate and
+permanent choice:
 
-- Näppäimistön kohdistusrengas (`:focus`-outline) säilyy saavutettavuuden takia.
-- Karttamerkkien valkoiset renkaat (pelaajapiste) säilyvät, jotta merkit erottuvat
-  vaihtelevasta karttapohjasta.
-- Arkkumerkeissä kultatausta ja UI-nappien värinen reunus (`--bg-high`) — merkki
-  poimii pelin nappityylin. Keskitetty maavarjo ja säteilevät kipinät ovat
-  pelitaidetta (houkutteleva keräilykohde maassa), eivät UI-kromia. Kantamassa
-  merkki kasvaa 1,5× ja heilahtaa hennosti kuin ravisteltava lahjapaketti.
-- Kartan päällä kelluvissa napeissa (esim. "Avaa aarre!" -CTA) tumma reunus
-  (`--bg-high`) on sallittu — vaalea karttapohja vaatii kontrastin.
-- Peligrafiikan (arkku-SVG) ääriviivat ovat kuvitusta, eivät UI-kromia.
+- **No shadows.** No `box-shadow`, `text-shadow` or `drop-shadow` rules.
+- **No glow effects.** No glow rings, no glowing edges, no halos.
+- **No border lines.** No `border` or `outline` decoration on cards, buttons,
+  fields or panels. Surfaces are distinguished by background color only
+  (`--bg` → `--bg-raised` → `--bg-card` → `--bg-high`, darkest to lightest).
+- **No gradients.** Buttons and surfaces are solid colors (`--aurora-green`, `--gold` etc.).
+- Selected state is highlighted with fill (background-color change), not with a border.
 
-## Ikonit
+Allowed exceptions — functionality, not decoration:
 
-- Ikonikirjasto on **Lucide** (`@lucide/svelte`). Käyttöliittymässä ei käytetä emojeita.
-- Tuo ikonit aina suoraan polulla, ei pakettijuuresta (nopeampi dev-käynnistys):
+- The keyboard focus ring (`:focus` outline) stays, for accessibility.
+- The white rings on map markers (player dot) stay so the markers stand out
+  against the varying map background.
+- Chest markers use a gold background and a ring in the UI button color
+  (`--bg-high`) — the marker picks up the game's button style. The centered
+  ground shadow and radiating sparks are game art (an enticing collectible on
+  the ground), not UI chrome. In range the marker grows 1.5× and wiggles gently
+  like a gift box begging to be shaken.
+- On buttons floating over the map (e.g. the "Avaa aarre!" CTA) a dark ring
+  (`--bg-high`) is allowed — the light map base needs the contrast.
+- Outlines in game art (the chest SVG) are illustration, not UI chrome.
+
+## Icons
+
+- The icon library is **Lucide** (`@lucide/svelte`). No emoji in the UI.
+- Always import icons by direct path, not from the package root (faster dev startup):
   `import Flame from '@lucide/svelte/icons/flame';`
-- Vakiintuneet merkitykset: `Flame` = putki (kulta, täytettynä), `Package` = kerätyt arkut.
-- Ikonin sisältävä rivi tarvitsee `display: inline-flex; align-items: center; gap: …`,
-  jotta ikoni ja teksti linjautuvat.
+- Established meanings: `Flame` = streak (gold, filled), `Package` = collected chests.
+- A row containing an icon needs `display: inline-flex; align-items: center; gap: …`
+  so the icon and text align.
 
-## Pelinäkymä
+## Game view
 
-- Koko ruudun kartta. HUD kelluu sen päällä: kerättyjen arkkujen määrä vasemmassa
-  yläkulmassa, putki oikeassa yläkulmassa (näkyy vasta ensimmäisen kerätyn arkun jälkeen),
-  tilarivi (etäisyys lähimpään aarteeseen / sijainnin tila) alhaalla keskellä.
-- Arkut ovat kartalla ympyräthumbnaileja; kantaman sisällä oleva arkku korostuu täytöllä
-  ja sykkeellä. Thumbnailin kuva (`static/arkku.png`) on renderöity 3D-arkkumallista
-  läpinäkyvälle pohjalle — jos malli muuttuu, renderöi kuva uudelleen ajamalla
-  `createChest` canvasille ja tallentamalla rajattu ruutukaappaus. Arkun avaus on koko ruudun näkymä (`ChestOverlay`) — pelin tuntuman ydin,
-  pidä se mehukkaana (ravistus, hiput, tärinäpalaute).
-- Avausnäkymän arkku on proseduraalinen Three.js-malli (`chest3d.ts`): oranssi lankkupuu,
-  järeät harmaat vanteet, kahdeksankulmainen lukkolevy, kultaa sisällä. Malli rakennetaan
-  koodissa — ei ladattavia mallitiedostoja, jotta julkaisu pysyy staattisena. Animaatiot
-  (ravistus, kannen avaus) tehdään rigin `tap()`/`open()`-kutsuilla.
-- Avaussekvenssi: napautus tärähdyttää kameraa (koko näkymä) ja pyöräyttää arkkua,
-  kolmannella kamera sukeltaa kiihtyen avaimenreikään ja ruutu pimenee — kuin sukeltaisi
-  arkun sisään. Pimeydestä paljastuu satunnainen jalokivi (`createGemView`) ja saalisteksti.
-  Dramaattinen valaistus ja hehku ovat 3D-pelitaidetta, eivät UI-kromia — litteysvaatimus
-  ei koske niitä.
-- Kamera kompensoi kuvasuhteen (vakio vaakakulma), jotta arkku mahtuu kapeaan pystyruutuun.
-- Jalokivet (`gems3d.ts`): kuusi harvinaisuusluokkaa yleisimmästä harvinaisimpaan —
-  vaaleanharmaa sirpale, vihreä sirpale, sininen pallo, violetti kidesikermä, oranssi
-  sirpale, punainen sirpale. Sirpaleet ovat epäsymmetrisiä kuperia kuoria
-  (`shardGeometry`), kukin säteilee mystisesti (emissio + värivalo + sykkivä hehkusprite).
-  `buildGem()` on jaettava rakentaja tuleville näkymille; debug-galleria näyttää kaikki.
-- **MapLibre-markkereihin ei saa laittaa transform-animaatiota juurielementtiin** — se
-  ylikirjoittaisi MapLibren sijoittelun. Animoi aina markkerin sisäelementtiä
-  (ks. `.chest-thumb-face`).
-- WASD-debug-kävely (`src/lib/game/player.svelte.ts`) ohittaa GPS:n kehitystestausta
-  varten (50 m/s). Älä riko sitä — se on ainoa tapa testata peliä työpöydällä.
-- Kätköpaikkaeditori `/editori` kirjoittaa paikat repositorioon: vite.config.ts:n
-  slot-editor-plugin vastaa POST `/__editori/slotit` -kutsuun ja korvaa SLOTS-lohkon
-  `src/lib/game/chests.ts`-tiedostossa. Toimii vain kehityspalvelimella; editorikartta
-  pitää nimistön näkyvissä (toisin kuin pelikartta).
+- Full-screen map. The HUD floats on top: collected-chest count in the top left,
+  streak in the top right (appears only after the first collected chest), and a
+  status row (distance to the nearest treasure / location status) bottom center.
+- Chests are circular thumbnails on the map; a chest within range is highlighted
+  with fill and a pulse. The thumbnail image (`static/arkku.png`) is rendered from
+  the 3D chest model onto a transparent background — if the model changes, re-render
+  it by running `createChest` on a canvas and saving a cropped screenshot. Opening
+  a chest is a full-screen view (`ChestOverlay`) — the core of the game's feel,
+  keep it juicy (shake, sparks, vibration feedback).
+- The chest in the opening view is a procedural Three.js model (`chest3d.ts`):
+  orange plank wood, chunky gray bands, an octagonal lock plate, gold inside.
+  The model is built in code — no downloadable model files, so the release stays
+  static. Animations (shake, lid opening) go through the rig's `tap()`/`open()` calls.
+- Opening sequence: every tap shakes the camera, spins the chest and may raise the
+  loot multiplier (x1–x5; +1 level 20 %, +2 levels 5 % per tap) — the background
+  changes color by level (black → green → blue → purple → orange) and ×N pops in.
+  After three taps, "Näytä aarteet!" starts the dive into the keyhole; the loot
+  emerges from the darkness. Each multiplier's gem is rolled separately (`rollLoot`)
+  and shown one at a time from most common to rarest — best one last. Tapping
+  anywhere (or the CTA) advances. The day's first collection ends in the streak
+  celebration: a big flame + streak count, a week row of numbered circles (today's
+  circle fills with a flame pop and a star/confetti burst). The celebration is
+  deliberately a purely mental reward — do not wire it into loot rolls or any
+  other game mechanic.
+  Drops are weighted by rarity (most common 55 %, rarest 0.1 % — see `DROP_RATES`
+  in state.svelte.ts).
+  Dramatic lighting and glow are 3D game art, not UI chrome — the flatness rule
+  does not apply to them.
+- The camera compensates for aspect ratio (constant horizontal FOV) so the chest
+  fits a narrow portrait screen.
+- Gems (`gems3d.ts`): six rarity tiers from most common to rarest — light gray
+  shard, green shard, blue orb, purple crystal cluster, orange shard, red shard.
+  Shards are asymmetric convex shells (`shardGeometry`), each radiating mystically
+  (emissive + colored light + pulsing glow sprite). `buildGem()` is a shared
+  builder for future views; the debug gallery shows them all.
+- **Never put a transform animation on a MapLibre marker's root element** — it
+  would overwrite MapLibre's positioning. Always animate an inner element of the
+  marker (see `.chest-thumb-face`).
+- The WASD debug walk (`src/lib/game/player.svelte.ts`) bypasses GPS for dev
+  testing (50 m/s). Don't break it — it is the only way to test the game on a desktop.
+- Debug buttons (chest-opening test, gem gallery, slot-editor link) are hidden
+  unless the page is opened with the `?debug` query param.
+- The chest-slot editor `/editori` writes locations into the repository: the
+  slot-editor plugin in vite.config.ts answers POST `/__editori/slotit` and
+  replaces the SLOTS block in `src/lib/game/chests.ts`. Works only on the dev
+  server; the editor map keeps place names visible (unlike the game map).
 
-## Muut käytännöt
+## Other conventions
 
-- Kaikki pelaajalle näkyvät tekstit ovat suomeksi ja asuvat `src/lib/fi.ts`-tiedostossa —
-  ei kovakoodattuja tekstejä komponentteihin.
-- Pyöreys on muotokieli: chipit ja napit ovat pillereitä (`border-radius: 999px`),
-  karttakontrollit ja arkkuthumbnailit ympyröitä.
-- Svelte 5 -runet (`$state`, `$derived`, `$effect`) — ei vanhaa store-syntaksia.
+- All player-visible text is Finnish and lives in `src/lib/fi.ts` — no hardcoded
+  strings in components.
+- Roundness is the design language: chips and buttons are pills
+  (`border-radius: 999px`), map controls and chest thumbnails circles.
+- Svelte 5 runes (`$state`, `$derived`, `$effect`) — no legacy store syntax.
