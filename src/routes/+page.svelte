@@ -15,6 +15,7 @@
 	import { LEVELS } from '$lib/game/chests';
 	import { player, startPlayer, stopPlayer, syncPlayer } from '$lib/game/player.svelte';
 	import { geo } from '$lib/client/geo.svelte';
+	import { compass, tryStartCompass } from '$lib/client/compass.svelte';
 	import { LOOT_RADIUS_M, type Chest } from '$lib/game/chests';
 	import { distanceM, inRange } from '$lib/geo';
 	import { idbDelete, idbGet, idbSet } from '$lib/client/storage';
@@ -49,8 +50,6 @@
 	let levelCompleteStatuses = $state<LevelStatus[] | null>(null);
 	// The level whose row plays the celebration animation
 	let levelCompleteLevel = $state<(typeof LEVELS)[number]>('puutarha');
-	// Debug variant shows a mock state and must not switch the real level
-	let levelCompleteIsDebug = false;
 	// Debug: opens the chest view without walking and does not persist the collection
 	let debugChestOpen = $state(false);
 	// Debug: gem gallery
@@ -98,21 +97,20 @@
 		openChestId = null;
 		if (pendingLevelComplete) {
 			pendingLevelComplete = false;
-			levelCompleteIsDebug = false;
 			levelCompleteLevel = game.level;
 			levelCompleteStatuses = levelStatus();
 		}
 	}
 
+	// Picking an unfinished area from the celebration loads it right away
 	function pickNextLevel(level: (typeof LEVELS)[number]) {
-		if (!levelCompleteIsDebug) void setLevel(level);
+		void setLevel(level);
 		levelCompleteStatuses = null;
 	}
 
 	// Debug: the celebration with two levels completed and one still open;
 	// the second one plays the just-completed animation
 	function debugLevelComplete() {
-		levelCompleteIsDebug = true;
 		levelCompleteLevel = LEVELS[1];
 		levelCompleteStatuses = LEVELS.map((level, i) => ({
 			level,
@@ -151,8 +149,13 @@
 	onMount(() => {
 		initGame();
 		void (async () => {
-			if (await idbGet(ONBOARDED_KEY)) startPlayer();
-			else onboarding = true;
+			if (await idbGet(ONBOARDED_KEY)) {
+				startPlayer();
+				// Compass resumes silently where no permission prompt is needed
+				void tryStartCompass();
+			} else {
+				onboarding = true;
+			}
 		})();
 		document.addEventListener('visibilitychange', onVisible);
 	});
@@ -171,6 +174,7 @@
 		level={game.level}
 		playerLat={player.lat}
 		playerLng={player.lng}
+		heading={compass.heading}
 		inRangeId={inRangeChestId}
 		{onchestclick}
 	/>
@@ -199,23 +203,20 @@
 		<button class="btn btn-gold open-cta" onclick={() => (openChestId = inRangeChestId)}>
 			{fi.openTreasure}
 		</button>
-	{:else}
-		<!-- Status row at the bottom: location status or distance to the nearest treasure -->
+	{:else if player.source === 'none'}
+		<!-- Status row at the bottom, only while the location is unresolved.
+		     Chest distances live in the tap bubbles on the markers. -->
 		<div class="hint">
-			{#if player.source === 'none'}
-				{#if player.geoStatus === 'denied'}
-					{fi.locationDenied}
-				{:else if player.geoStatus === 'unavailable'}
-					{fi.locationUnavailable}
-				{:else}
-					{fi.locating}
-				{/if}
-			{:else if !nearest}
-				{fi.allLooted}
+			{#if player.geoStatus === 'denied'}
+				{fi.locationDenied}
+			{:else if player.geoStatus === 'unavailable'}
+				{fi.locationUnavailable}
 			{:else}
-				{fi.distanceToNearest(fi.formatDistance(nearest.distance))}
+				{fi.locating}
 			{/if}
 		</div>
+	{:else if !nearest}
+		<div class="hint">{fi.allLooted}</div>
 	{/if}
 
 	{#if debugMode}

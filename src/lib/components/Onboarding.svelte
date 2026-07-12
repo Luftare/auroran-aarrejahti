@@ -1,18 +1,17 @@
 <script lang="ts">
 	// One-time onboarding for new players, one spoonful at a time:
-	// 1. landing view — a mock phone shows the game at a glance,
-	// 2. Aurora's story, 3. how to play, 4. the location-permission ask.
-	// The CTA lives in a static footer so its position never depends on the
-	// step's content.
+	// landing view (a mock phone shows the game at a glance), Aurora's story,
+	// the area choice on a live preview map, the mandatory location-permission
+	// ask, and the voluntary compass ask. The CTA lives in a static footer so
+	// its position never depends on the step's content.
 	import { fi } from '$lib/fi';
 	import { geo } from '$lib/client/geo.svelte';
-	import { defaultLevel, type LevelId } from '$lib/game/chests';
-	import LevelOptions from './LevelOptions.svelte';
+	import { compassSupported, requestCompass } from '$lib/client/compass.svelte';
+	import { defaultLevel, LEVELS, SLOTS_BY_LEVEL, type LevelId } from '$lib/game/chests';
+	import AreaPreviewMap from './AreaPreviewMap.svelte';
+	import Compass from '@lucide/svelte/icons/compass';
 	import Flame from '@lucide/svelte/icons/flame';
-	import Footprints from '@lucide/svelte/icons/footprints';
-	import MapIcon from '@lucide/svelte/icons/map';
 	import MapPin from '@lucide/svelte/icons/map-pin';
-	import MoonStar from '@lucide/svelte/icons/moon-star';
 
 	let {
 		onrequestlocation,
@@ -21,64 +20,71 @@
 	}: {
 		/** Starts (or restarts) location watching — triggers the permission prompt. */
 		onrequestlocation: () => void;
-		/** Applies the chosen area right away — the map behind refits to it. */
+		/** Applies the chosen area when the player confirms it. */
 		onselectlevel: (level: LevelId) => void;
 		oncomplete: () => void;
 	} = $props();
 
+	// Steps: landing, story, area (map preview), location (mandatory),
+	// compass (voluntary)
 	const STEPS = 5;
-	const LAST = STEPS - 1;
+	const AREA_STEP = 2;
+	const LOCATION_STEP = 3;
+	const COMPASS_STEP = 4;
 	let step = $state(0);
 
 	// Area choice; the first playable level is preselected (layers without
-	// marks are shown disabled)
+	// marks cannot be toggled). Toggling only moves the preview camera —
+	// the level is applied when the "Valitse <name>" CTA confirms it.
 	let chosenLevel = $state<LevelId>(defaultLevel());
 
-	function pickLevel(level: LevelId) {
-		chosenLevel = level;
-		onselectlevel(level);
-	}
-
-	// The location step waits for the permission result before entering the
-	// map: idle → waiting → (granted: complete) | failed → retry / confirm
-	let locState = $state<'idle' | 'waiting' | 'failed'>('idle');
+	// The location step waits for the permission result: the game cannot run
+	// without it, so a failure only offers a retry. Once granted, the flow
+	// moves on to the voluntary compass step (skipped without compass support).
+	let locState = $state<'idle' | 'waiting' | 'failed' | 'done'>('idle');
 
 	$effect(() => {
 		if (locState !== 'waiting') return;
-		if (geo.status === 'ok') oncomplete();
-		else if (geo.status === 'denied' || geo.status === 'unavailable') locState = 'failed';
+		if (geo.status === 'ok') {
+			locState = 'done';
+			if (compassSupported()) step = COMPASS_STEP;
+			else oncomplete();
+		} else if (geo.status === 'denied' || geo.status === 'unavailable') {
+			locState = 'failed';
+		}
 	});
 
 	const ctaLabel = $derived.by(() => {
 		if (step === 0) return fi.onboardingStart;
-		if (step === 1) return fi.onboardingStoryNext;
-		if (step === 2) return fi.chooseArea;
-		if (step === 3) return fi.onboardingHowNext;
+		if (step === 1) return fi.chooseArea;
+		if (step === AREA_STEP) return fi.onboardingPickLevel(fi.levelName[chosenLevel]);
+		if (step === COMPASS_STEP) return fi.onboardingAllowCompass;
 		if (locState === 'waiting') return fi.locating;
-		if (locState === 'failed')
-			return geo.status === 'denied' ? fi.onboardingContinueAnyway : fi.retry;
+		if (locState === 'failed') return fi.retry;
 		return fi.onboardingAllowLocation;
 	});
 
-	// The location request runs inside the tap gesture, so the browser's
-	// permission prompt opens immediately.
+	// The permission requests run inside the tap gesture, so the browser's
+	// prompts open immediately.
 	function next() {
-		if (step < LAST) {
+		if (step === AREA_STEP) {
+			onselectlevel(chosenLevel);
 			step += 1;
 			return;
 		}
-		if (locState === 'idle') {
-			locState = 'waiting';
-			onrequestlocation();
-		} else if (locState === 'failed') {
-			if (geo.status === 'denied') {
-				// The player confirms continuing without location
-				oncomplete();
-			} else {
+		if (step < LOCATION_STEP) {
+			step += 1;
+			return;
+		}
+		if (step === LOCATION_STEP) {
+			if (locState === 'idle' || locState === 'failed') {
 				locState = 'waiting';
 				onrequestlocation();
 			}
+			return;
 		}
+		// Compass step: ask, then enter the map whatever the answer was
+		void requestCompass().then(() => oncomplete());
 	}
 
 	// Starfield of the story's night scene: position (%), size (px) and
@@ -116,7 +122,7 @@
 
 	<div class="body">
 		{#key step}
-			<section class="step">
+			<section class="step" class:area={step === AREA_STEP}>
 				{#if step === 0}
 					<!-- Hero title: one word per line -->
 					<h1>
@@ -150,6 +156,9 @@
 								<span class="mock-chest big" style="left:44%;top:64%"
 									><span class="face"><img src="/arkku.png" alt="" /></span></span
 								>
+								<span class="mock-bubble" style="left:44%;top:64%"
+									>{fi.chestDistance(fi.formatDistance(200))}</span
+								>
 								<span class="mock-player" style="left:60%;top:80%"
 									><span class="mp-pulse"></span><span class="mp-core"></span></span
 								>
@@ -160,7 +169,6 @@
 								<span class="mock-chip chip-right"
 									><Flame size={11} color="var(--gold)" fill="var(--gold)" />4</span
 								>
-								<span class="mock-hint">{fi.distanceToNearest(fi.formatDistance(200))}</span>
 							</div>
 						</div>
 					</div>
@@ -177,30 +185,29 @@
 						{/each}
 						<img src="/arkku.png" alt="" width="84" height="84" />
 					</div>
-					<h2>{fi.onboardingStoryTitle}</h2>
 					<p>{fi.onboardingStory1}</p>
 					<p class="muted">{fi.onboardingStory2}</p>
-				{:else if step === 2}
-					<h2>{fi.onboardingHowTitle}</h2>
-					<!-- All list icons share one color (see also LevelOptions) -->
-					<div class="how">
-						<div class="how-row">
-							<span class="how-icon"><MapIcon size={20} color="var(--aurora-green)" /></span>
-							{fi.onboardingHowMap}
-						</div>
-						<div class="how-row">
-							<span class="how-icon"><Footprints size={20} color="var(--aurora-green)" /></span>
-							{fi.onboardingHowWalk}
-						</div>
-						<div class="how-row">
-							<span class="how-icon"><MoonStar size={20} color="var(--aurora-green)" /></span>
-							{fi.onboardingHowMidnight}
-						</div>
+				{:else if step === AREA_STEP}
+					<!-- Area choice: the map owns the top, a compact segmented
+					     selector sits at the bottom. Toggling glides the camera
+					     to the level's treasures. -->
+					<div class="area-map">
+						<AreaPreviewMap level={chosenLevel} />
+						<span class="area-title">{fi.chooseArea}</span>
 					</div>
-				{:else if step === 3}
-					<h2>{fi.chooseArea}</h2>
-					<LevelOptions selected={chosenLevel} onselect={pickLevel} />
-				{:else}
+					<div class="area-tabs">
+						{#each LEVELS as id (id)}
+							<button
+								class="area-tab"
+								class:active={id === chosenLevel}
+								disabled={SLOTS_BY_LEVEL[id].length === 0}
+								onclick={() => (chosenLevel = id)}
+							>
+								{fi.levelName[id]}
+							</button>
+						{/each}
+					</div>
+				{:else if step === LOCATION_STEP}
 					<span class="pin"><MapPin size={34} color="var(--aurora-green)" /></span>
 					<h2>{fi.onboardingLocationTitle}</h2>
 					{#if locState === 'failed'}
@@ -208,6 +215,10 @@
 					{:else}
 						<p>{fi.onboardingLocationBody}</p>
 					{/if}
+				{:else}
+					<span class="pin"><Compass size={34} color="var(--aurora-green)" /></span>
+					<h2>{fi.onboardingCompassTitle}</h2>
+					<p>{fi.onboardingCompassBody}</p>
 				{/if}
 			</section>
 		{/key}
@@ -217,11 +228,15 @@
 	<div class="footer">
 		<button
 			class="btn cta"
-			class:btn-primary={step < LAST}
-			class:btn-gold={step === LAST}
-			disabled={step === LAST && locState === 'waiting'}
+			class:btn-primary={step < LOCATION_STEP}
+			class:btn-gold={step >= LOCATION_STEP}
+			disabled={step === LOCATION_STEP && locState === 'waiting'}
 			onclick={next}>{ctaLabel}</button
 		>
+		{#if step === COMPASS_STEP}
+			<!-- The compass is voluntary: a gray secondary way past it -->
+			<button class="btn cta secondary" onclick={oncomplete}>{fi.onboardingSkipCompass}</button>
+		{/if}
 		<div class="dots" aria-hidden="true">
 			{#each Array(STEPS) as _, i (i)}
 				<span class="dot" class:active={i === step}></span>
@@ -342,6 +357,13 @@
 		width: min(78vw, 320px);
 		font-weight: 700;
 		font-size: 1.05rem;
+	}
+
+	/* Secondary action: the plain gray button under the primary CTA */
+	.cta.secondary {
+		font-size: 0.95rem;
+		padding: 0.65rem 1.4rem;
+		color: var(--muted);
 	}
 
 	.dots {
@@ -549,7 +571,7 @@
 		position: absolute;
 		inset: 3px;
 		border-radius: 50%;
-		background: var(--aurora-teal);
+		background: var(--bg-high);
 		border: 2px solid #fff;
 	}
 
@@ -557,7 +579,7 @@
 		position: absolute;
 		inset: 0;
 		border-radius: 50%;
-		background: rgba(56, 195, 216, 0.4);
+		background: rgba(31, 68, 84, 0.45);
 		animation: mock-pulse 2s ease-out infinite;
 	}
 
@@ -611,20 +633,28 @@
 		right: 8px;
 	}
 
-	.mock-hint {
+	/* Mini speech bubble above the big chest, like tapping a treasure in-game */
+	.mock-bubble {
 		position: absolute;
-		bottom: 10px;
-		left: 50%;
-		transform: translateX(-50%);
+		transform: translate(-50%, -190%);
 		width: max-content;
-		max-width: 88%;
 		padding: 3px 9px;
 		border-radius: 999px;
 		background: var(--bg);
 		font-size: 9px;
-		font-weight: 600;
-		text-align: center;
+		font-weight: 700;
 		color: var(--text);
+	}
+
+	.mock-bubble::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		bottom: -5px;
+		transform: translateX(-50%);
+		border: 5px solid transparent;
+		border-top-color: var(--bg);
+		border-bottom: none;
 	}
 
 	/* ---- Story night scene ---- */
@@ -655,36 +685,65 @@
 		}
 	}
 
-	/* ---- How to play ---- */
+	/* ---- Area choice: a full-bleed map step, unlike the other spoonfuls ---- */
 
-	.how {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
+	.step.area {
+		max-width: none;
+		margin: 0;
+		padding: 0;
+		flex: 1;
+		align-self: stretch;
+		gap: 0;
+		text-align: initial;
+	}
+
+	.area-map {
+		position: relative;
+		flex: 1;
 		width: 100%;
 	}
 
-	.how-row {
-		display: flex;
-		align-items: center;
-		gap: 0.9rem;
-		background: var(--bg-raised);
-		border-radius: var(--radius);
-		padding: 0.75rem 0.9rem;
-		text-align: left;
-		font-weight: 600;
-		font-size: 0.95rem;
+	/* Title floats over the map like the game's HUD chips */
+	.area-title {
+		position: absolute;
+		top: 0.7rem;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 5;
+		padding: 0.5rem 1.1rem;
+		border-radius: 999px;
+		background: var(--bg);
+		font-weight: 800;
+		font-size: 1.05rem;
+		pointer-events: none;
 	}
 
-	.how-icon {
+	/* Compact segmented selector: three pills, the active one filled */
+	.area-tabs {
 		flex: none;
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
-		background: var(--bg-high);
 		display: flex;
-		align-items: center;
 		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.9rem 1rem 0.1rem;
+	}
+
+	.area-tab {
+		padding: 0.5rem 1.15rem;
+		border-radius: 999px;
+		background: var(--bg-raised);
+		color: var(--muted);
+		font-weight: 700;
+		font-size: 0.98rem;
+		transition: background 150ms ease, color 150ms ease;
+	}
+
+	.area-tab.active {
+		background: var(--aurora-green);
+		color: #06222b;
+	}
+
+	.area-tab:disabled {
+		opacity: 0.4;
 	}
 
 	/* ---- Location step ---- */

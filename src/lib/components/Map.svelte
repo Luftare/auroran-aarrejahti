@@ -3,6 +3,7 @@
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { fi } from '$lib/fi';
+	import { distanceM } from '$lib/geo';
 	import type { Chest } from '$lib/game/chests';
 	import LocateFixed from '@lucide/svelte/icons/locate-fixed';
 	import Minus from '@lucide/svelte/icons/minus';
@@ -13,6 +14,7 @@
 		level = '',
 		playerLat = null as number | null,
 		playerLng = null as number | null,
+		heading = null as number | null,
 		inRangeId = null as string | null,
 		onchestclick
 	}: {
@@ -21,6 +23,8 @@
 		level?: string;
 		playerLat: number | null;
 		playerLng: number | null;
+		/** Device compass heading (deg from north); null hides the cone. */
+		heading?: number | null;
 		inRangeId: string | null;
 		onchestclick: (id: string) => void;
 	} = $props();
@@ -37,6 +41,13 @@
 	let panned = $state(true);
 	let fittedToChests = false;
 	let fittedLevel = '';
+
+	// Speech bubble: tapping a treasure tells how far away it is. The tapped
+	// chest rises to the top of the chest z-order; tapping anywhere else
+	// dismisses the bubble.
+	let bubbleId = $state<string | null>(null);
+	let bubbleMarker: maplibregl.Marker | null = null;
+	let bubbleTextEl: HTMLElement | null = null;
 
 	// Off-screen treasures show as small half-dots hugging the screen edges.
 	// A chest beyond a corner gets a hint on both adjacent edges.
@@ -76,6 +87,9 @@
 		map.on('dragstart', () => (panned = true));
 		// 'move' fires throughout pans, zooms and camera animations
 		map.on('move', updateEdgeHints);
+		// Tapping anywhere but a chest dismisses the distance bubble
+		// (chest marker clicks stop propagation and never reach here)
+		map.on('click', () => (bubbleId = null));
 		map.touchPitch.disable();
 		// Place names and map symbols are stripped from the game map, but
 		// street names are kept visible — they help navigate to the chests.
@@ -115,20 +129,43 @@
 		}
 	});
 
-	// Player location marker — the camera follows only after a recenter tap
+	// Player location marker — the camera follows only after a recenter tap.
+	// The heading cone lives on an inner element (never transform the
+	// MapLibre marker root) and rotates with the device compass.
+	let headingEl: HTMLElement | null = null;
+
+	function updateHeadingCone(): void {
+		if (!headingEl) return;
+		if (heading == null) {
+			headingEl.style.opacity = '0';
+		} else {
+			headingEl.style.opacity = '1';
+			headingEl.style.transform = `rotate(${heading - (map?.getBearing() ?? 0)}deg)`;
+		}
+	}
+
 	$effect(() => {
 		if (!map || playerLat == null || playerLng == null) return;
 		if (!playerMarker) {
 			const el = document.createElement('div');
 			el.className = 'player-dot';
-			el.innerHTML = '<div class="player-pulse"></div><div class="player-core"></div>';
+			el.innerHTML =
+				'<div class="player-pulse"></div><div class="player-heading"><div class="player-cone"></div></div><div class="player-core"></div>';
+			headingEl = el.querySelector('.player-heading');
 			playerMarker = new maplibregl.Marker({ element: el }).setLngLat([playerLng, playerLat]).addTo(map);
+			updateHeadingCone();
 		} else {
 			playerMarker.setLngLat([playerLng, playerLat]);
 		}
 		if (!panned) {
 			map.setCenter([playerLng, playerLat]);
 		}
+	});
+
+	// The cone follows the compass (and the map bearing, would it ever rotate)
+	$effect(() => {
+		void heading;
+		updateHeadingCone();
 	});
 
 	// Chests as circular thumbnails — collected ones disappear from the map
@@ -166,7 +203,14 @@
 			el.innerHTML = `<span class="chest-thumb-inner"><span class="chest-thumb-ground"></span>${sparks}<span class="chest-thumb-ring"><span class="chest-thumb-face">${CHEST_IMG}</span></span></span>`;
 			el.addEventListener('click', (e) => {
 				e.stopPropagation();
-				onchestclick(chest.id);
+				if (chest.id === inRangeId) {
+					// In range: open the chest as before
+					bubbleId = null;
+					onchestclick(chest.id);
+				} else {
+					// Out of range: the chest tells how far away it is
+					bubbleId = chest.id;
+				}
 			});
 			chestMarkers.set(
 				chest.id,
@@ -185,6 +229,34 @@
 		for (const [id, marker] of chestMarkers) {
 			marker.getElement().classList.toggle('in-range', id === active);
 		}
+	});
+
+	// The distance bubble follows the tapped chest and updates live as the
+	// player walks. The tapped chest rises above its siblings in z-order.
+	$effect(() => {
+		const chest = bubbleId ? chests.find((c) => c.id === bubbleId && !c.looted) : null;
+		for (const [id, marker] of chestMarkers) {
+			marker.getElement().classList.toggle('topmost', id === bubbleId);
+		}
+		if (!map || !chest || playerLat == null || playerLng == null) {
+			bubbleMarker?.remove();
+			bubbleMarker = null;
+			bubbleTextEl = null;
+			return;
+		}
+		if (!bubbleMarker) {
+			const el = document.createElement('div');
+			el.className = 'chest-bubble';
+			el.innerHTML = '<span class="chest-bubble-inner"></span>';
+			bubbleTextEl = el.querySelector('.chest-bubble-inner');
+			bubbleMarker = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, -36] })
+				.setLngLat([chest.lng, chest.lat])
+				.addTo(map);
+		} else {
+			bubbleMarker.setLngLat([chest.lng, chest.lat]);
+		}
+		const dist = distanceM(playerLat, playerLng, chest.lat, chest.lng);
+		bubbleTextEl!.textContent = fi.chestDistance(fi.formatDistance(dist));
 	});
 
 	function recenter() {
@@ -248,6 +320,54 @@
 	   own hint. */
 	:global(.map .maplibregl-marker) {
 		z-index: 5;
+	}
+
+	/* The tapped chest rises above its siblings; its bubble above everything */
+	:global(.map .maplibregl-marker.topmost) {
+		z-index: 6;
+	}
+
+	:global(.map .maplibregl-marker.chest-bubble) {
+		z-index: 7;
+		pointer-events: none;
+	}
+
+	/* Speech bubble: a dark pill with a tip pointing at the chest. The pop
+	   animation lives on the inner element — never transform a marker root. */
+	:global(.chest-bubble-inner) {
+		position: relative;
+		display: block;
+		padding: 0.45rem 0.85rem;
+		border-radius: 999px;
+		background: var(--bg);
+		color: var(--text);
+		font-weight: 700;
+		font-size: 0.92rem;
+		white-space: nowrap;
+		animation: bubble-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+		transform-origin: 50% 100%;
+	}
+
+	:global(.chest-bubble-inner::after) {
+		content: '';
+		position: absolute;
+		left: 50%;
+		bottom: -6px;
+		transform: translateX(-50%);
+		border: 7px solid transparent;
+		border-top-color: var(--bg);
+		border-bottom: none;
+	}
+
+	@keyframes bubble-pop {
+		from {
+			transform: scale(0.4);
+			opacity: 0;
+		}
+		to {
+			transform: scale(1);
+			opacity: 1;
+		}
 	}
 
 	.edge-hint {
@@ -435,7 +555,7 @@
 	}
 
 	/* The white ring is for map-marker legibility against the map base,
-	   not UI decoration */
+	   not UI decoration. The marker uses the UI element color. */
 	:global(.player-dot) {
 		position: relative;
 		width: 22px;
@@ -446,7 +566,7 @@
 		position: absolute;
 		inset: 4px;
 		border-radius: 50%;
-		background: var(--aurora-teal);
+		background: var(--bg-high);
 		border: 2px solid #fff;
 	}
 
@@ -454,8 +574,29 @@
 		position: absolute;
 		inset: 0;
 		border-radius: 50%;
-		background: rgba(56, 195, 216, 0.4);
+		background: rgba(31, 68, 84, 0.45);
 		animation: pulse 2s ease-out infinite;
+	}
+
+	/* Compass heading: a fading beam showing where the device is facing.
+	   Rotates around the dot center; hidden while there is no heading. */
+	:global(.player-heading) {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		transition: opacity 300ms ease;
+		pointer-events: none;
+	}
+
+	:global(.player-cone) {
+		position: absolute;
+		left: 50%;
+		bottom: 50%;
+		width: 36px;
+		height: 30px;
+		transform: translateX(-50%);
+		clip-path: polygon(50% 100%, 0 0, 100% 0);
+		background: linear-gradient(to top, rgba(31, 68, 84, 0.7), rgba(31, 68, 84, 0));
 	}
 
 	@keyframes pulse {

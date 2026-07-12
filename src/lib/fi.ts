@@ -4,24 +4,22 @@ export const fi = {
 	appName: 'Auroran aarrejahti',
 
 	// Onboarding — the story and instructions, one spoonful at a time
-	onboardingLead: 'Aloita koko perheen hauska aarrejahti. Joka päivä uudet aarteet!',
+	onboardingLead: 'Aloita koko perheen hauska aarrejahti Träskändan kartanon kulmilla!',
 	onboardingStart: 'Aloita',
 	onboardingStamp: 'Kehitetty Järvenperässä',
-	onboardingStoryTitle: 'Auroran salaisuus',
 	onboardingStory1:
-		'Joka yö Aurora kätkee uusia aarteita vanhoille kotikulmilleen Järvenperään.',
+		'Joka yö Aurora kätkee uusia aarteita vanhoille kotikulmilleen...',
 	onboardingStory2: 'Aamulla arkut odottavat löytäjäänsä.',
-	onboardingStoryNext: 'Miten pelataan?',
-	onboardingHowTitle: 'Näin se toimii',
-	onboardingHowMap: 'Katso kartalta, missä tämän päivän aarteet ovat.',
-	onboardingHowWalk: 'Kävele arkun luo ja avaa se.',
-	onboardingHowMidnight: 'Keskiyöllä Aurora kätkee uudet aarteet uusiin paikkoihin. Etsi ne huomenna!',
-	onboardingHowNext: 'Selvä!',
+	onboardingPickLevel: (name: string) => `Valitse ${name}`,
 	onboardingLocationTitle: 'Vielä yksi juttu',
 	onboardingLocationBody:
-		'Jotta kartta löytää sinut ja aarteet, peli tarvitsee luvan sijaintiisi. Sijaintia käytetään vain aarteiden etsimiseen.',
-	onboardingAllowLocation: 'Salli sijainti ja avaa kartta',
-	onboardingContinueAnyway: 'Jatka silti',
+		'Peli tarvitsee toimiakseen sijaintiasi.',
+	onboardingAllowLocation: 'Salli sijainti',
+	onboardingCompassTitle: 'Otetaanko kompassi käyttöön?',
+	onboardingCompassBody:
+		'Kompassi näyttää kartalla, mihin suuntaan olet katsomassa. Se on vapaaehtoinen apu.',
+	onboardingAllowCompass: 'Salli kompassi',
+	onboardingSkipCompass: 'En tarvitse kompassia.',
 
 	// Location
 	locating: 'Etsitään sijaintiasi…',
@@ -51,7 +49,7 @@ export const fi = {
 		'Löysit tänään kaikkien alueiden kaikki aarteet. Uudet aarteet ilmestyvät keskiyöllä.',
 
 	// Map
-	distanceToNearest: (dist: string) => `Lähin aarre on ${dist} päässä. Kävele lähemmäs!`,
+	chestDistance: (dist: string) => `${dist} päässä`,
 	openTreasure: 'Avaa arkku!',
 	allLooted: 'Löysit kaikki tämän päivän aarteet! Uudet aarteet ilmestyvät keskiyöllä.',
 	recenter: 'Palaa omaan sijaintiin',

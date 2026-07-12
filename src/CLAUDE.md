@@ -67,17 +67,24 @@ Allowed exceptions — functionality, not decoration:
 
 ## Game view
 
-- Onboarding (`Onboarding.svelte`): new players get a four-step flow before the
+- Onboarding (`Onboarding.svelte`): new players get a five-step flow before the
   map — landing view (a CSS mock phone showing the game at a glance), Aurora's
-  story (chests hidden nightly around Träskända manor in Järvenperä), how to
-  play, and the location-permission ask. One message per screen ("one spoonful
+  story (chests hidden nightly around Träskända manor in Järvenperä), the area
+  choice, and the permission asks. One message per screen ("one spoonful
   at a time"). The CTA and progress dots live in a static footer whose position
   never depends on the step's content. The seen-flag is the IndexedDB key
-  `perehdytys`; location watching starts only from the final CTA tap so the
-  browser permission prompt is tied to a user gesture. The flow waits for the
-  permission result before entering the map: granted proceeds, unavailable
-  offers a retry, and a decline must be confirmed ("Jatka silti") before
-  continuing without location. A debug button (book icon) replays the flow.
+  `perehdytys`; permission requests run inside the CTA tap so the browser
+  prompts are tied to a user gesture. Location is mandatory: the flow waits
+  for the result and a failure only offers a retry — there is no way past it.
+  After location, a voluntary compass step follows (skipped entirely when the
+  DeviceOrientation API is absent): the primary CTA asks for the permission,
+  a gray secondary button ("En tarvitse kompassia.") skips it. A debug button
+  (book icon) replays the flow.
+- Compass heading comes from the `universal-compass` package via
+  `src/lib/client/compass.svelte.ts`. The player marker (UI element color
+  `--bg-high` with the white legibility ring) shows a fading direction cone
+  rotated by the heading; no heading → no cone. Returning players resume the
+  compass silently where no prompt is needed (`tryStartCompass`).
 - On the landing view Aurora peeks from behind the phone mockup's right edge:
   `static/aurora.webp` is rendered twice — the base image behind the phone
   (z-index -1) and a `clip-path`-cropped copy of just her fingers on top, so
@@ -97,16 +104,22 @@ Allowed exceptions — functionality, not decoration:
   slot list in `chests.ts` (`SLOTS_BY_LEVEL`). No positions are shared between
   layers: every location is marked separately per layer in `/editori`. The
   daily pick is seeded per level, the choice persists in the game state, and
-  new players pick an area in the onboarding ("Valitse alue" step). A layer
-  without marks is shown disabled and cannot be played; `defaultLevel()` (the
-  first layer with slots) is the fallback everywhere. `LevelOptions.svelte`
-  renders the three options; it is shared by the onboarding and the in-game
-  modal.
+  new players pick an area in the onboarding's "Valitse alue" step: a
+  full-bleed preview map (`AreaPreviewMap.svelte`) owns the top, a compact
+  segmented pill selector sits at the bottom, toggling glides the camera to
+  that level's treasures, and the CTA reads "Valitse <name>". A layer without
+  marks is shown disabled and cannot be played; `defaultLevel()` (the first
+  layer with slots) is the fallback everywhere. `LevelOptions.svelte` renders
+  the three option rows for the in-game modal and the level-complete view.
 - Full-screen map. The HUD floats on top: collected-chest count in the top left,
   the current area name top center (opens the area-switch modal), streak in the
-  top right (appears only after the first collected chest), and a status row
-  (distance to the nearest treasure / location status) bottom center. Switching
-  the area re-fits the camera to the new chest set.
+  top right (appears only after the first collected chest). The bottom status
+  row appears only while the location is unresolved (or everything is looted).
+  Switching the area re-fits the camera to the new chest set.
+- Tapping an out-of-range chest shows a speech bubble above it telling how far
+  it is (updates live as the player walks); the tapped chest rises to the top
+  of the chest z-order and tapping anywhere else dismisses the bubble. An
+  in-range chest still opens directly.
 - Chests are circular thumbnails on the map; a chest within range is highlighted
   with fill and a pulse. The thumbnail image (`static/arkku.png`) is rendered from
   the 3D chest model onto a transparent background — if the model changes, re-render
@@ -154,7 +167,7 @@ Allowed exceptions — functionality, not decoration:
   burst — see `celebrate` in `LevelOptions.svelte`). Completed levels are
   ticked and disabled. When every level is done, the title/body switch to
   congratulations and the note that new chests appear at midnight.
-- List-row icons (onboarding how-to, area rows) all share one color,
+- List-row icons (area rows and similar lists) all share one color,
   `--aurora-green`.
 - Debug buttons (chest-opening test, gem gallery, slot-editor link, onboarding
   replay, level-complete example with two areas done) are hidden unless the
