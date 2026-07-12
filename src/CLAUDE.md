@@ -8,6 +8,8 @@ and `src/app.css`.
 - Everything the player can see is in Finnish: UI strings (all in `src/lib/fi.ts`,
   never hardcoded in components) **and URL paths** — paths are visible text, so
   routes are Finnish too (e.g. `/editori`).
+- No em-dashes (—) or en-dashes (–) in player-visible texts — use a period,
+  comma or colon instead. (English code comments may use them freely.)
 - Everything else is in English: code comments, docs, identifiers, commit messages
   and other non-visible text.
 

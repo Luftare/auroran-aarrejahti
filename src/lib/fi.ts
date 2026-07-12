@@ -4,17 +4,17 @@ export const fi = {
 	appName: 'Auroran aarrejahti',
 
 	// Onboarding — the story and instructions, one spoonful at a time
-	onboardingLead: 'Joka päivä uudet aarteet. Kävele niiden luo ja kerää ne talteen.',
+	onboardingLead: 'Aloita koko perheen hauska aarrejahti. Joka päivä uudet aarteet.',
 	onboardingStart: 'Aloita',
 	onboardingStoryTitle: 'Auroran salaisuus',
 	onboardingStory1:
-		'Joka yö Aurora kätkee aarrearkkunsa vanhoille kotikulmilleen — Träskändan kartanon maisemiin Järvenperään.',
+		'Joka yö Aurora kätkee uusia aarteita vanhoille kotikulmilleen Järvenperään.',
 	onboardingStory2: 'Aamulla arkut odottavat löytäjäänsä.',
 	onboardingStoryNext: 'Miten pelataan?',
 	onboardingHowTitle: 'Näin se toimii',
 	onboardingHowMap: 'Katso kartalta, missä tämän päivän aarteet ovat.',
 	onboardingHowWalk: 'Kävele arkun luo ja avaa se.',
-	onboardingHowMidnight: 'Keskiyöllä Aurora kätkee uudet aarteet. Palaa huomenna!',
+	onboardingHowMidnight: 'Keskiyöllä Aurora kätkee uudet aarteet uusiin paikkoihin. Etsi ne huomenna!',
 	onboardingHowNext: 'Selvä!',
 	onboardingLocationTitle: 'Vielä yksi juttu',
 	onboardingLocationBody:
@@ -30,7 +30,7 @@ export const fi = {
 	retry: 'Yritä uudelleen',
 
 	// Map
-	distanceToNearest: (dist: string) => `Lähin aarre on ${dist} päässä — kävele lähemmäs!`,
+	distanceToNearest: (dist: string) => `Lähin aarre on ${dist} päässä. Kävele lähemmäs!`,
 	openTreasure: 'Avaa arkku!',
 	allLooted: 'Löysit kaikki tämän päivän aarteet! Uudet aarteet ilmestyvät keskiyöllä.',
 	recenter: 'Palaa omaan sijaintiin',
@@ -49,7 +49,7 @@ export const fi = {
 	streak: 'Putki',
 	collected: 'Kerätyt aarteet',
 	gemsTitle: 'Kerätyt jalokivet',
-	noGems: 'Ei vielä jalokiviä — avaa aarrearkkuja!',
+	noGems: 'Ei vielä jalokiviä. Avaa aarrearkkuja!',
 
 	// Orientation hint
 	rotatePortrait: 'Käännä laite pystyasentoon.',
@@ -64,7 +64,7 @@ export const fi = {
 	editorTitle: 'Kätköpaikat',
 	editorSave: 'Tallenna',
 	editorHint: 'Napauta karttaa lisätäksesi · raahaa siirtääksesi · napauta merkkiä poistaaksesi',
-	editorSaved: (n: number) => `Tallennettu repositorioon — ${n} paikkaa.`,
+	editorSaved: (n: number) => `Tallennettu repositorioon: ${n} paikkaa.`,
 	editorSaveFailed: 'Tallennus epäonnistui. Editori toimii vain kehityspalvelimella (npm run dev).',
 
 	/** 200 m / 1,2 km — Finnish formatting */

@@ -29,6 +29,31 @@
 		if (step === LAST) oncomplete();
 		else step += 1;
 	}
+
+	// Starfield of the story's night scene: position (%), size (px) and
+	// twinkle delay/duration (s). Hand-scattered so it renders the same
+	// every time, sparser near the bottom where the chest sits.
+	const NIGHT_STARS = [
+		{ x: 4, y: 16, s: 3, d: 0.2, t: 2.6 },
+		{ x: 11, y: 4, s: 4, d: 1.4, t: 3.0 },
+		{ x: 19, y: 26, s: 2, d: 0.7, t: 2.3 },
+		{ x: 27, y: 10, s: 3, d: 2.1, t: 2.8 },
+		{ x: 35, y: 1, s: 2, d: 0.4, t: 3.2 },
+		{ x: 43, y: 20, s: 4, d: 1.8, t: 2.5 },
+		{ x: 52, y: 6, s: 3, d: 0.9, t: 2.9 },
+		{ x: 60, y: 24, s: 2, d: 2.4, t: 2.4 },
+		{ x: 68, y: 2, s: 4, d: 0.1, t: 3.1 },
+		{ x: 76, y: 14, s: 3, d: 1.2, t: 2.7 },
+		{ x: 85, y: 5, s: 2, d: 1.9, t: 2.4 },
+		{ x: 93, y: 22, s: 3, d: 0.5, t: 3.3 },
+		{ x: 8, y: 42, s: 2, d: 2.2, t: 2.6 },
+		{ x: 24, y: 52, s: 3, d: 1.1, t: 3.0 },
+		{ x: 48, y: 38, s: 2, d: 0.3, t: 2.5 },
+		{ x: 72, y: 48, s: 2, d: 1.6, t: 2.8 },
+		{ x: 90, y: 40, s: 3, d: 2.5, t: 2.4 },
+		{ x: 16, y: 68, s: 2, d: 0.8, t: 3.1 },
+		{ x: 82, y: 66, s: 2, d: 1.5, t: 2.7 }
+	];
 </script>
 
 <div class="overlay">
@@ -87,10 +112,12 @@
 				{:else if step === 1}
 					<!-- Night scene: the chest under a starry sky -->
 					<div class="night" aria-hidden="true">
-						<span class="moon"><MoonStar size={38} color="var(--gold)" /></span>
-						<span class="nstar s1"></span>
-						<span class="nstar s2"></span>
-						<span class="nstar s3"></span>
+						{#each NIGHT_STARS as star, i (i)}
+							<span
+								class="nstar"
+								style="left:{star.x}%;top:{star.y}%;width:{star.s}px;height:{star.s}px;animation-delay:{star.d}s;animation-duration:{star.t}s"
+							></span>
+						{/each}
 						<img src="/arkku.png" alt="" width="84" height="84" />
 					</div>
 					<h2>{fi.onboardingStoryTitle}</h2>
@@ -249,7 +276,7 @@
 	   base image in front of the bezel. Shifted slightly left so peeking
 	   Aurora fits on narrow screens. */
 	.phone-tilt {
-		transform: rotate(-3deg);
+		transform: rotate(-7deg);
 		flex: none;
 		margin-right: 2.5rem;
 	}
@@ -507,44 +534,18 @@
 
 	.night {
 		position: relative;
-		width: 170px;
-		height: 130px;
+		width: min(70vw, 240px);
+		height: 140px;
 		display: flex;
 		align-items: flex-end;
 		justify-content: center;
 	}
 
-	.moon {
-		position: absolute;
-		top: 0;
-		right: 10px;
-		line-height: 0;
-	}
-
 	.nstar {
 		position: absolute;
-		width: 4px;
-		height: 4px;
 		border-radius: 50%;
 		background: var(--text);
-		animation: twinkle 2.6s ease-in-out infinite;
-	}
-
-	.nstar.s1 {
-		left: 18px;
-		top: 12px;
-	}
-
-	.nstar.s2 {
-		left: 58px;
-		top: 34px;
-		animation-delay: 0.9s;
-	}
-
-	.nstar.s3 {
-		right: 66px;
-		top: 6px;
-		animation-delay: 1.7s;
+		animation: twinkle ease-in-out infinite;
 	}
 
 	@keyframes twinkle {
