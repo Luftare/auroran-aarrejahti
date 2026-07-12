@@ -34,6 +34,30 @@
 	let panned = $state(true);
 	let fittedToChests = false;
 
+	// Off-screen treasures show as small half-dots hugging the screen edges.
+	// A chest beyond a corner gets a hint on both adjacent edges.
+	type EdgeHint = { key: string; edge: 'top' | 'bottom' | 'left' | 'right'; pos: number };
+	let edgeHints = $state<EdgeHint[]>([]);
+	function updateEdgeHints(): void {
+		if (!map) return;
+		const w = container.clientWidth;
+		const h = container.clientHeight;
+		const hints: EdgeHint[] = [];
+		for (const chest of chests) {
+			if (chest.looted) continue;
+			const p = map.project([chest.lng, chest.lat]);
+			if (p.x >= 0 && p.x <= w && p.y >= 0 && p.y <= h) continue;
+			// May slide to the very corner; the overflow clips to a quarter-dot
+			const x = Math.min(Math.max(p.x, 0), w);
+			const y = Math.min(Math.max(p.y, 0), h);
+			if (p.x < 0) hints.push({ key: `${chest.id}-l`, edge: 'left', pos: y });
+			else if (p.x > w) hints.push({ key: `${chest.id}-r`, edge: 'right', pos: y });
+			if (p.y < 0) hints.push({ key: `${chest.id}-t`, edge: 'top', pos: x });
+			else if (p.y > h) hints.push({ key: `${chest.id}-b`, edge: 'bottom', pos: x });
+		}
+		edgeHints = hints;
+	}
+
 	// Image rendered from the 3D chest model (static/arkku.png)
 	const CHEST_IMG = '<img src="/arkku.png" alt="" width="34" height="34" draggable="false" />';
 
@@ -46,6 +70,8 @@
 			attributionControl: { compact: true }
 		});
 		map.on('dragstart', () => (panned = true));
+		// 'move' fires throughout pans, zooms and camera animations
+		map.on('move', updateEdgeHints);
 		map.touchPitch.disable();
 		// Place names and map symbols are stripped from the game map, but
 		// street names are kept visible — they help navigate to the chests.
@@ -139,6 +165,8 @@
 				new maplibregl.Marker({ element: el }).setLngLat([chest.lng, chest.lat]).addTo(map)
 			);
 		}
+		// Chest set changed (day rolled over, a chest was looted) — refresh the hints
+		updateEdgeHints();
 	});
 
 	// The chest within range is highlighted. The dependency is read before
@@ -160,6 +188,15 @@
 </script>
 
 <div class="map" bind:this={container}></div>
+
+<!-- Direction hints for off-screen treasures: half-capsules at the edges -->
+{#each edgeHints as hint (hint.key)}
+	{#if hint.edge === 'top' || hint.edge === 'bottom'}
+		<span class="edge-hint {hint.edge}" style:left="{hint.pos}px"></span>
+	{:else}
+		<span class="edge-hint {hint.edge}" style:top="{hint.pos}px"></span>
+	{/if}
+{/each}
 
 <div class="controls">
 	{#if panned && playerLat != null}
@@ -195,6 +232,55 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	/* Off-screen treasure hints: small half-dots flush against the screen
+	   edge, in the UI element color. Flat side sits on the edge. Stacked
+	   below the map markers: a chest sliding in over the edge covers its
+	   own hint. */
+	:global(.map .maplibregl-marker) {
+		z-index: 5;
+	}
+
+	.edge-hint {
+		position: absolute;
+		z-index: 4;
+		pointer-events: none;
+		background: var(--bg-high);
+	}
+
+	.edge-hint.top,
+	.edge-hint.bottom {
+		width: 14px;
+		height: 7px;
+		transform: translateX(-50%);
+	}
+
+	.edge-hint.left,
+	.edge-hint.right {
+		width: 7px;
+		height: 14px;
+		transform: translateY(-50%);
+	}
+
+	.edge-hint.top {
+		top: 0;
+		border-radius: 0 0 999px 999px;
+	}
+
+	.edge-hint.bottom {
+		bottom: 0;
+		border-radius: 999px 999px 0 0;
+	}
+
+	.edge-hint.left {
+		left: 0;
+		border-radius: 0 999px 999px 0;
+	}
+
+	.edge-hint.right {
+		right: 0;
+		border-radius: 999px 0 0 999px;
 	}
 
 	/* Chest as a circular thumbnail on the map: floats above its shadow,

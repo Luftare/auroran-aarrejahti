@@ -87,6 +87,9 @@ Allowed exceptions — functionality, not decoration:
 - The map opens as an overview fitted to all of the day's chests ("where are
   today's treasures?"). The camera follows the player only after they tap the
   recenter button.
+- Off-screen chests show as small half-dot hints (0.125 of the marker size,
+  `--bg-high`) flush against the screen edges; they may slide all the way to
+  the corners. A chest beyond a corner gets a hint on both adjacent edges.
 - Full-screen map. The HUD floats on top: collected-chest count in the top left,
   streak in the top right (appears only after the first collected chest), and a
   status row (distance to the nearest treasure / location status) bottom center.
