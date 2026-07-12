@@ -3,6 +3,24 @@
 export const fi = {
 	appName: 'Auroran aarrejahti',
 
+	// Onboarding — the story and instructions, one spoonful at a time
+	onboardingLead: 'Joka päivä uudet aarteet. Kävele niiden luo ja kerää ne talteen.',
+	onboardingStart: 'Aloita',
+	onboardingStoryTitle: 'Auroran salaisuus',
+	onboardingStory1:
+		'Joka yö Aurora kätkee aarrearkkunsa vanhoille kotikulmilleen — Träskändan kartanon maisemiin Järvenperään.',
+	onboardingStory2: 'Aamulla arkut odottavat löytäjäänsä.',
+	onboardingStoryNext: 'Miten pelataan?',
+	onboardingHowTitle: 'Näin se toimii',
+	onboardingHowMap: 'Katso kartalta, missä tämän päivän aarteet ovat.',
+	onboardingHowWalk: 'Kävele arkun luo ja avaa se.',
+	onboardingHowMidnight: 'Keskiyöllä Aurora kätkee uudet aarteet. Palaa huomenna!',
+	onboardingHowNext: 'Selvä!',
+	onboardingLocationTitle: 'Vielä yksi juttu',
+	onboardingLocationBody:
+		'Jotta kartta löytää sinut ja aarteet, peli tarvitsee luvan sijaintiisi. Sijaintia käytetään vain aarteiden etsimiseen.',
+	onboardingAllowLocation: 'Salli sijainti ja avaa kartta',
+
 	// Location
 	locating: 'Etsitään sijaintiasi…',
 	locationDenied:
@@ -39,6 +57,7 @@ export const fi = {
 	// Dev tools
 	debugChest: 'Kokeile arkun avausta (debug)',
 	debugGems: 'Näytä jalokivet (debug)',
+	debugOnboarding: 'Käynnistä perehdytys uudelleen (debug)',
 	close: 'Sulje',
 
 	// Chest-slot editor

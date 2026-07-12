@@ -56,6 +56,25 @@ Allowed exceptions — functionality, not decoration:
 
 ## Game view
 
+- Onboarding (`Onboarding.svelte`): new players get a four-step flow before the
+  map — landing view (a CSS mock phone showing the game at a glance), Aurora's
+  story (chests hidden nightly around Träskända manor in Järvenperä), how to
+  play, and the location-permission ask. One message per screen ("one spoonful
+  at a time"). The CTA and progress dots live in a static footer whose position
+  never depends on the step's content. The seen-flag is the IndexedDB key
+  `perehdytys`; location watching starts only from the final CTA tap so the
+  browser permission prompt is tied to a user gesture. A debug button (book
+  icon) replays the flow.
+- On the landing view Aurora peeks from behind the phone mockup's right edge:
+  `static/aurora.webp` is rendered twice — the base image behind the phone
+  (z-index -1) and a `clip-path`-cropped copy of just her fingers on top, so
+  she grips the device. The asset is a background-removed, bottom-faded cutout
+  of `aurora.png` (source kept at the repo root); the grip line sits 10.99 %
+  from the image's left edge — the CSS offsets in `Onboarding.svelte` are
+  derived from that, so recompute them if the art changes.
+- The map opens as an overview fitted to all of the day's chests ("where are
+  today's treasures?"). The camera follows the player only after they tap the
+  recenter button.
 - Full-screen map. The HUD floats on top: collected-chest count in the top left,
   streak in the top right (appears only after the first collected chest), and a
   status row (distance to the nearest treasure / location status) bottom center.
@@ -96,8 +115,8 @@ Allowed exceptions — functionality, not decoration:
   marker (see `.chest-thumb-face`).
 - The WASD debug walk (`src/lib/game/player.svelte.ts`) bypasses GPS for dev
   testing (50 m/s). Don't break it — it is the only way to test the game on a desktop.
-- Debug buttons (chest-opening test, gem gallery, slot-editor link) are hidden
-  unless the page is opened with the `?debug` query param.
+- Debug buttons (chest-opening test, gem gallery, slot-editor link, onboarding
+  replay) are hidden unless the page is opened with the `?debug` query param.
 - The chest-slot editor `/editori` writes locations into the repository: the
   slot-editor plugin in vite.config.ts answers POST `/__editori/slotit` and
   replaces the SLOTS block in `src/lib/game/chests.ts`. Works only on the dev

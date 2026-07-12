@@ -7,14 +7,23 @@
 	import { geo } from '$lib/client/geo.svelte';
 	import { LOOT_RADIUS_M, type Chest } from '$lib/game/chests';
 	import { distanceM, inRange } from '$lib/geo';
+	import { idbDelete, idbGet, idbSet } from '$lib/client/storage';
 	import Map from '$lib/components/Map.svelte';
 	import ChestOverlay from '$lib/components/ChestOverlay.svelte';
 	import CollectedGems from '$lib/components/CollectedGems.svelte';
 	import GemGallery from '$lib/components/GemGallery.svelte';
+	import Onboarding from '$lib/components/Onboarding.svelte';
+	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Flame from '@lucide/svelte/icons/flame';
 	import FlaskConical from '@lucide/svelte/icons/flask-conical';
 	import Gem from '@lucide/svelte/icons/gem';
 	import MapPin from '@lucide/svelte/icons/map-pin';
+
+	// New players see the onboarding first; the flag lives in IndexedDB.
+	// Location watching (and its permission prompt) starts only when the
+	// onboarding's final CTA is tapped — or right away for returning players.
+	const ONBOARDED_KEY = 'perehdytys';
+	let onboarding = $state(false);
 
 	let openChestId = $state<string | null>(null);
 	// Collection of gathered gems (opens from the chest chip)
@@ -59,9 +68,27 @@
 		if (document.visibilityState === 'visible') refreshDay();
 	}
 
+	// The final onboarding CTA ends up here — startPlayer() runs inside the tap
+	// gesture, so the browser shows the location-permission prompt immediately.
+	function finishOnboarding() {
+		onboarding = false;
+		startPlayer();
+		void idbSet(ONBOARDED_KEY, '1');
+	}
+
+	// Debug: replay the onboarding as a new player would see it
+	function replayOnboarding() {
+		stopPlayer();
+		void idbDelete(ONBOARDED_KEY);
+		onboarding = true;
+	}
+
 	onMount(() => {
 		initGame();
-		startPlayer();
+		void (async () => {
+			if (await idbGet(ONBOARDED_KEY)) startPlayer();
+			else onboarding = true;
+		})();
 		document.addEventListener('visibilitychange', onVisible);
 	});
 
@@ -140,6 +167,11 @@
 		<a class="debug-btn editor" href="/editori" aria-label={fi.editorTitle}>
 			<MapPin size={18} />
 		</a>
+
+		<!-- Debug: replay the new-player onboarding flow -->
+		<button class="debug-btn onboarding" onclick={replayOnboarding} aria-label={fi.debugOnboarding}>
+			<BookOpen size={18} />
+		</button>
 	{/if}
 
 	{#if openChestId}
@@ -162,6 +194,10 @@
 
 	{#if debugGemsOpen}
 		<GemGallery onclose={() => (debugGemsOpen = false)} />
+	{/if}
+
+	{#if onboarding}
+		<Onboarding oncomplete={finishOnboarding} />
 	{/if}
 </main>
 
@@ -221,6 +257,10 @@
 
 	.debug-btn.editor {
 		bottom: calc(11.4rem + env(safe-area-inset-bottom));
+	}
+
+	.debug-btn.onboarding {
+		bottom: calc(14.6rem + env(safe-area-inset-bottom));
 	}
 
 	/* A dark ring separates the button from the light map base */

@@ -28,8 +28,11 @@
 	let map: maplibregl.Map | null = null;
 	let playerMarker: maplibregl.Marker | null = null;
 	let chestMarkers = new Map<string, maplibregl.Marker>();
-	let panned = $state(false);
-	let centeredOnce = false;
+	// The map opens as an overview of all of the day's chests ("where are
+	// today's treasures?"), so the camera starts in the panned state and
+	// follows the player only after they tap recenter.
+	let panned = $state(true);
+	let fittedToChests = false;
 
 	// Image rendered from the 3D chest model (static/arkku.png)
 	const CHEST_IMG = '<img src="/arkku.png" alt="" width="34" height="34" draggable="false" />';
@@ -58,7 +61,27 @@
 
 	onDestroy(() => map?.remove());
 
-	// Player location marker — the camera follows until the player pans manually
+	// Initial view: a zoom level that shows all of the day's treasures at a
+	// glance. Runs once, as soon as the chests have loaded from IndexedDB.
+	$effect(() => {
+		if (!map || fittedToChests || chests.length === 0) return;
+		fittedToChests = true;
+		const targets = chests.filter((c) => !c.looted);
+		const bounds = new maplibregl.LngLatBounds();
+		for (const c of targets.length > 0 ? targets : chests) bounds.extend([c.lng, c.lat]);
+		try {
+			map.fitBounds(bounds, {
+				padding: { top: 90, bottom: 120, left: 40, right: 40 },
+				duration: 0,
+				maxZoom: 15.5
+			});
+		} catch {
+			// The padding does not fit a very small viewport — fall back to a smaller one
+			map.fitBounds(bounds, { padding: 24, duration: 0, maxZoom: 15.5 });
+		}
+	});
+
+	// Player location marker — the camera follows only after a recenter tap
 	$effect(() => {
 		if (!map || playerLat == null || playerLng == null) return;
 		if (!playerMarker) {
@@ -69,10 +92,7 @@
 		} else {
 			playerMarker.setLngLat([playerLng, playerLat]);
 		}
-		if (!centeredOnce) {
-			centeredOnce = true;
-			map.jumpTo({ center: [playerLng, playerLat], zoom: 15 });
-		} else if (!panned) {
+		if (!panned) {
 			map.setCenter([playerLng, playerLat]);
 		}
 	});
