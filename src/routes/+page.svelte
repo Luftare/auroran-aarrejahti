@@ -68,8 +68,16 @@
 		if (document.visibilityState === 'visible') refreshDay();
 	}
 
-	// The final onboarding CTA ends up here — startPlayer() runs inside the tap
-	// gesture, so the browser shows the location-permission prompt immediately.
+	// The onboarding's location CTA ends up here — startPlayer() runs inside
+	// the tap gesture, so the browser shows the permission prompt immediately.
+	// Restarting makes retry work when the first attempt failed.
+	function requestLocation() {
+		stopPlayer();
+		startPlayer();
+	}
+
+	// The onboarding closes only once the permission result is in: granted,
+	// or a decline the player has explicitly confirmed.
 	function finishOnboarding() {
 		onboarding = false;
 		startPlayer();
@@ -197,7 +205,7 @@
 	{/if}
 
 	{#if onboarding}
-		<Onboarding oncomplete={finishOnboarding} />
+		<Onboarding onrequestlocation={requestLocation} oncomplete={finishOnboarding} />
 	{/if}
 </main>
 

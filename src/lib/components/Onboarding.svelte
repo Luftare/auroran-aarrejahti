@@ -5,29 +5,65 @@
 	// The CTA lives in a static footer so its position never depends on the
 	// step's content.
 	import { fi } from '$lib/fi';
+	import { geo } from '$lib/client/geo.svelte';
 	import Flame from '@lucide/svelte/icons/flame';
 	import Footprints from '@lucide/svelte/icons/footprints';
 	import MapIcon from '@lucide/svelte/icons/map';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import MoonStar from '@lucide/svelte/icons/moon-star';
 
-	let { oncomplete }: { oncomplete: () => void } = $props();
+	let {
+		onrequestlocation,
+		oncomplete
+	}: {
+		/** Starts (or restarts) location watching — triggers the permission prompt. */
+		onrequestlocation: () => void;
+		oncomplete: () => void;
+	} = $props();
 
 	const STEPS = 4;
 	const LAST = STEPS - 1;
 	let step = $state(0);
 
-	const ctaLabel = $derived(
-		[fi.onboardingStart, fi.onboardingStoryNext, fi.onboardingHowNext, fi.onboardingAllowLocation][
-			step
-		]
-	);
+	// The location step waits for the permission result before entering the
+	// map: idle → waiting → (granted: complete) | failed → retry / confirm
+	let locState = $state<'idle' | 'waiting' | 'failed'>('idle');
 
-	// The final CTA runs oncomplete inside the tap gesture, so the browser's
-	// location-permission prompt opens immediately.
+	$effect(() => {
+		if (locState !== 'waiting') return;
+		if (geo.status === 'ok') oncomplete();
+		else if (geo.status === 'denied' || geo.status === 'unavailable') locState = 'failed';
+	});
+
+	const ctaLabel = $derived.by(() => {
+		if (step === 0) return fi.onboardingStart;
+		if (step === 1) return fi.onboardingStoryNext;
+		if (step === 2) return fi.onboardingHowNext;
+		if (locState === 'waiting') return fi.locating;
+		if (locState === 'failed')
+			return geo.status === 'denied' ? fi.onboardingContinueAnyway : fi.retry;
+		return fi.onboardingAllowLocation;
+	});
+
+	// The location request runs inside the tap gesture, so the browser's
+	// permission prompt opens immediately.
 	function next() {
-		if (step === LAST) oncomplete();
-		else step += 1;
+		if (step < LAST) {
+			step += 1;
+			return;
+		}
+		if (locState === 'idle') {
+			locState = 'waiting';
+			onrequestlocation();
+		} else if (locState === 'failed') {
+			if (geo.status === 'denied') {
+				// The player confirms continuing without location
+				oncomplete();
+			} else {
+				locState = 'waiting';
+				onrequestlocation();
+			}
+		}
 	}
 
 	// Starfield of the story's night scene: position (%), size (px) and
@@ -148,7 +184,11 @@
 				{:else}
 					<span class="pin"><MapPin size={34} color="var(--aurora-green)" /></span>
 					<h2>{fi.onboardingLocationTitle}</h2>
-					<p>{fi.onboardingLocationBody}</p>
+					{#if locState === 'failed'}
+						<p>{geo.status === 'denied' ? fi.locationDenied : fi.locationUnavailable}</p>
+					{:else}
+						<p>{fi.onboardingLocationBody}</p>
+					{/if}
 				{/if}
 			</section>
 		{/key}
@@ -160,6 +200,7 @@
 			class="btn cta"
 			class:btn-primary={step < LAST}
 			class:btn-gold={step === LAST}
+			disabled={step === LAST && locState === 'waiting'}
 			onclick={next}>{ctaLabel}</button
 		>
 		<div class="dots" aria-hidden="true">

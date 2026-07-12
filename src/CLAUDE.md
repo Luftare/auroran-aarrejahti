@@ -74,8 +74,10 @@ Allowed exceptions — functionality, not decoration:
   at a time"). The CTA and progress dots live in a static footer whose position
   never depends on the step's content. The seen-flag is the IndexedDB key
   `perehdytys`; location watching starts only from the final CTA tap so the
-  browser permission prompt is tied to a user gesture. A debug button (book
-  icon) replays the flow.
+  browser permission prompt is tied to a user gesture. The flow waits for the
+  permission result before entering the map: granted proceeds, unavailable
+  offers a retry, and a decline must be confirmed ("Jatka silti") before
+  continuing without location. A debug button (book icon) replays the flow.
 - On the landing view Aurora peeks from behind the phone mockup's right edge:
   `static/aurora.webp` is rendered twice — the base image behind the phone
   (z-index -1) and a `clip-path`-cropped copy of just her fingers on top, so

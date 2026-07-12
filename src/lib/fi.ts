@@ -21,6 +21,7 @@ export const fi = {
 	onboardingLocationBody:
 		'Jotta kartta löytää sinut ja aarteet, peli tarvitsee luvan sijaintiisi. Sijaintia käytetään vain aarteiden etsimiseen.',
 	onboardingAllowLocation: 'Salli sijainti ja avaa kartta',
+	onboardingContinueAnyway: 'Jatka silti',
 
 	// Location
 	locating: 'Etsitään sijaintiasi…',
