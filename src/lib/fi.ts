@@ -4,7 +4,7 @@ export const fi = {
 	appName: 'Auroran aarrejahti',
 
 	// Onboarding — the story and instructions, one spoonful at a time
-	onboardingLead: 'Aloita koko perheen hauska aarrejahti. Joka päivä uudet aarteet.',
+	onboardingLead: 'Aloita koko perheen hauska aarrejahti. Joka päivä uudet aarteet!',
 	onboardingStart: 'Aloita',
 	onboardingStamp: 'Kehitetty Järvenperässä',
 	onboardingStoryTitle: 'Auroran salaisuus',
@@ -30,6 +30,19 @@ export const fi = {
 	locationUnavailable: 'Sijaintia ei saatu selville. Yritä hetken kuluttua uudelleen.',
 	locationNeeded: 'Peli tarvitsee sijaintisi toimiakseen.',
 	retry: 'Yritä uudelleen',
+
+	// Levels ("areas"): each has its own treasure range
+	levelName: {
+		puutarha: 'Puutarha',
+		metsa: 'Metsä',
+		seutu: 'Seutu'
+	} as Record<string, string>,
+	levelDesc: {
+		puutarha: 'Lyhyt retki kartanon puutarhassa.',
+		metsa: 'Reipas kierros kartanon metsässä.',
+		seutu: 'Koko Järvenperä tutkittavana.'
+	} as Record<string, string>,
+	chooseArea: 'Valitse alue',
 
 	// Map
 	distanceToNearest: (dist: string) => `Lähin aarre on ${dist} päässä. Kävele lähemmäs!`,

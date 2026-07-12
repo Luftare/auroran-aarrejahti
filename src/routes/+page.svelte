@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { fi } from '$lib/fi';
-	import { game, initGame, collectChest, refreshDay, rollLoot } from '$lib/game/state.svelte';
+	import { game, initGame, collectChest, refreshDay, rollLoot, setLevel } from '$lib/game/state.svelte';
 	import { player, startPlayer, stopPlayer, syncPlayer } from '$lib/game/player.svelte';
 	import { geo } from '$lib/client/geo.svelte';
 	import { LOOT_RADIUS_M, type Chest } from '$lib/game/chests';
@@ -12,6 +12,7 @@
 	import ChestOverlay from '$lib/components/ChestOverlay.svelte';
 	import CollectedGems from '$lib/components/CollectedGems.svelte';
 	import GemGallery from '$lib/components/GemGallery.svelte';
+	import LevelPicker from '$lib/components/LevelPicker.svelte';
 	import Onboarding from '$lib/components/Onboarding.svelte';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Flame from '@lucide/svelte/icons/flame';
@@ -28,6 +29,8 @@
 	let openChestId = $state<string | null>(null);
 	// Collection of gathered gems (opens from the chest chip)
 	let gemsOpen = $state(false);
+	// Area switcher (opens from the top-center level chip)
+	let levelPickerOpen = $state(false);
 	// Debug: opens the chest view without walking and does not persist the collection
 	let debugChestOpen = $state(false);
 	// Debug: gem gallery
@@ -111,18 +114,23 @@
 <main>
 	<Map
 		chests={game.chests}
+		level={game.level}
 		playerLat={player.lat}
 		playerLng={player.lng}
 		inRangeId={inRangeChestId}
 		{onchestclick}
 	/>
 
-	<!-- HUD: collected count on the left (opens the gem collection), streak on
+	<!-- HUD: collected count on the left (opens the gem collection), the
+	     current area in the center (opens the area switcher), streak on
 	     the right (visible from the first treasure onward) -->
 	<div class="hud">
 		<button class="chip" title={fi.collected} onclick={() => (gemsOpen = true)}>
 			<img class="chip-chest" src="/arkku.png" alt="" width="22" height="22" />
 			{game.total}
+		</button>
+		<button class="chip level-chip" title={fi.chooseArea} onclick={() => (levelPickerOpen = true)}>
+			{fi.levelName[game.level]}
 		</button>
 		{#if game.total > 0}
 			<span class="chip" title={fi.streak}>
@@ -200,12 +208,24 @@
 		<CollectedGems gems={game.gems} onclose={() => (gemsOpen = false)} />
 	{/if}
 
+	{#if levelPickerOpen}
+		<LevelPicker
+			level={game.level}
+			onselect={(l) => void setLevel(l)}
+			onclose={() => (levelPickerOpen = false)}
+		/>
+	{/if}
+
 	{#if debugGemsOpen}
 		<GemGallery onclose={() => (debugGemsOpen = false)} />
 	{/if}
 
 	{#if onboarding}
-		<Onboarding onrequestlocation={requestLocation} oncomplete={finishOnboarding} />
+		<Onboarding
+			onrequestlocation={requestLocation}
+			onselectlevel={(l) => void setLevel(l)}
+			oncomplete={finishOnboarding}
+		/>
 	{/if}
 </main>
 
@@ -243,6 +263,13 @@
 
 	button.chip { pointer-events: auto; color: var(--text); }
 	.chip-chest { display: block; }
+
+	/* Current area, centered — independent of the side chips */
+	.level-chip {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+	}
 
 	.debug-btn {
 		position: absolute;

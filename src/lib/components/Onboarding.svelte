@@ -6,6 +6,8 @@
 	// step's content.
 	import { fi } from '$lib/fi';
 	import { geo } from '$lib/client/geo.svelte';
+	import { defaultLevel, type LevelId } from '$lib/game/chests';
+	import LevelOptions from './LevelOptions.svelte';
 	import Flame from '@lucide/svelte/icons/flame';
 	import Footprints from '@lucide/svelte/icons/footprints';
 	import MapIcon from '@lucide/svelte/icons/map';
@@ -14,16 +16,28 @@
 
 	let {
 		onrequestlocation,
+		onselectlevel,
 		oncomplete
 	}: {
 		/** Starts (or restarts) location watching — triggers the permission prompt. */
 		onrequestlocation: () => void;
+		/** Applies the chosen area right away — the map behind refits to it. */
+		onselectlevel: (level: LevelId) => void;
 		oncomplete: () => void;
 	} = $props();
 
-	const STEPS = 4;
+	const STEPS = 5;
 	const LAST = STEPS - 1;
 	let step = $state(0);
+
+	// Area choice; the first playable level is preselected (layers without
+	// marks are shown disabled)
+	let chosenLevel = $state<LevelId>(defaultLevel());
+
+	function pickLevel(level: LevelId) {
+		chosenLevel = level;
+		onselectlevel(level);
+	}
 
 	// The location step waits for the permission result before entering the
 	// map: idle → waiting → (granted: complete) | failed → retry / confirm
@@ -38,7 +52,8 @@
 	const ctaLabel = $derived.by(() => {
 		if (step === 0) return fi.onboardingStart;
 		if (step === 1) return fi.onboardingStoryNext;
-		if (step === 2) return fi.onboardingHowNext;
+		if (step === 2) return fi.chooseArea;
+		if (step === 3) return fi.onboardingHowNext;
 		if (locState === 'waiting') return fi.locating;
 		if (locState === 'failed')
 			return geo.status === 'denied' ? fi.onboardingContinueAnyway : fi.retry;
@@ -181,6 +196,9 @@
 							{fi.onboardingHowMidnight}
 						</div>
 					</div>
+				{:else if step === 3}
+					<h2>{fi.chooseArea}</h2>
+					<LevelOptions selected={chosenLevel} onselect={pickLevel} />
 				{:else}
 					<span class="pin"><MapPin size={34} color="var(--aurora-green)" /></span>
 					<h2>{fi.onboardingLocationTitle}</h2>

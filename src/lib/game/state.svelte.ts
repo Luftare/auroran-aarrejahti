@@ -3,7 +3,15 @@
 
 import { idbGet, idbSet } from '$lib/client/storage';
 import { GEM_ORDER, type GemKind } from '$lib/components/gems3d';
-import { currentDay, dailySlots, type Chest } from './chests';
+import {
+	currentDay,
+	dailySlots,
+	defaultLevel,
+	LEVELS,
+	SLOTS_BY_LEVEL,
+	type Chest,
+	type LevelId
+} from './chests';
 
 type Persisted = {
 	/** Day → ids of looted slots. Old days are cleaned up. */
@@ -13,6 +21,8 @@ type Persisted = {
 	totalCollected: number;
 	/** Collected gems by kind. */
 	gems: Partial<Record<GemKind, number>>;
+	/** The chosen area — each level has its own treasure range. */
+	level: LevelId;
 };
 
 const KEY = 'pelitila';
@@ -21,7 +31,8 @@ const EMPTY: Persisted = {
 	streakCurrent: 0,
 	lastLootDay: null,
 	totalCollected: 0,
-	gems: {}
+	gems: {},
+	level: defaultLevel()
 };
 
 export type Loot = Partial<Record<GemKind, number>>;
@@ -63,11 +74,12 @@ export function rollLoot(count: number): Loot {
 export const game = $state<{
 	ready: boolean;
 	day: string;
+	level: LevelId;
 	chests: Chest[];
 	streak: number;
 	total: number;
 	gems: Partial<Record<GemKind, number>>;
-}>({ ready: false, day: '', chests: [], streak: 0, total: 0, gems: {} });
+}>({ ready: false, day: '', level: 'puutarha', chests: [], streak: 0, total: 0, gems: {} });
 
 let persisted: Persisted = { ...EMPTY };
 
@@ -87,7 +99,8 @@ function effectiveStreak(p: Persisted, today: string): number {
 function buildDay(today: string): void {
 	const looted = new Set(persisted.lootedByDay[today] ?? []);
 	game.day = today;
-	game.chests = dailySlots(today).map((s) => ({ ...s, looted: looted.has(s.id) }));
+	game.level = persisted.level;
+	game.chests = dailySlots(today, persisted.level).map((s) => ({ ...s, looted: looted.has(s.id) }));
 	game.streak = effectiveStreak(persisted, today);
 	game.total = persisted.totalCollected;
 	game.gems = { ...persisted.gems };
@@ -110,6 +123,11 @@ export async function initGame(): Promise<void> {
 	} catch {
 		persisted = { ...EMPTY };
 	}
+	// Data saved before levels existed, with a removed level, or pointing at
+	// a layer that has no marks anymore falls back to the first playable one
+	if (!LEVELS.includes(persisted.level) || SLOTS_BY_LEVEL[persisted.level].length === 0) {
+		persisted.level = defaultLevel();
+	}
 	buildDay(currentDay());
 	game.ready = true;
 }
@@ -118,6 +136,16 @@ export async function initGame(): Promise<void> {
 export function refreshDay(): void {
 	const today = currentDay();
 	if (today !== game.day) buildDay(today);
+}
+
+/** Switches the area: the day's chests rebuild from the level's own slots.
+ *  A layer without marks cannot be played, so it is refused. */
+export async function setLevel(level: LevelId): Promise<void> {
+	if (!LEVELS.includes(level) || level === persisted.level) return;
+	if (SLOTS_BY_LEVEL[level].length === 0) return;
+	persisted.level = level;
+	buildDay(game.day || currentDay());
+	await persist();
 }
 
 /**

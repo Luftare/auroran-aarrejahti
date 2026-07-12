@@ -3,13 +3,17 @@
 // offsets on top of the real (or fallback) position.
 
 import { geo, startWatching, stopWatching } from '$lib/client/geo.svelte';
-import { SLOTS } from './chests';
+import { defaultLevel, SLOTS_BY_LEVEL } from './chests';
 
 /** Debug walk speed (m/s). Brisk pace so chest-to-chest gaps test in seconds. */
 const DEBUG_SPEED_MS = 300;
 
-/** When there is no GPS, the debug walk starts north of the first slot. */
-const FALLBACK_START = { lat: SLOTS[0].lat + 0.0012, lng: SLOTS[0].lng };
+/** When there is no GPS, the debug walk starts north of the default level's
+ *  first slot (center of the play area if every layer is empty). */
+const firstSlot = SLOTS_BY_LEVEL[defaultLevel()][0];
+const FALLBACK_START = firstSlot
+	? { lat: firstSlot.lat + 0.0012, lng: firstSlot.lng }
+	: { lat: 60.2375, lng: 24.7095 };
 
 const M_PER_DEG_LAT = 111_320;
 

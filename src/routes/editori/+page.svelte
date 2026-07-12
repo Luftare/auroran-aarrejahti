@@ -1,16 +1,17 @@
 <script lang="ts">
 	// Chest-slot editor (dev tool): mark potential treasure locations
-	// on the map. Saving writes the locations straight into the repository
-	// (src/lib/game/chests.ts) via the dev server.
+	// on the map, one level (layer) at a time. Saving writes the current
+	// level's locations straight into the repository (src/lib/game/chests.ts)
+	// via the dev server.
 	//
 	// Tap the map = add a location · drag a marker = move ·
-	// tap a marker = remove.
+	// tap a marker = remove · tabs switch the edited layer.
 
 	import { onDestroy, onMount } from 'svelte';
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { fi } from '$lib/fi';
-	import { SLOTS } from '$lib/game/chests';
+	import { LEVELS, SLOTS_BY_LEVEL, type LevelId } from '$lib/game/chests';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 
@@ -19,8 +20,18 @@
 	let container: HTMLDivElement;
 	let map: maplibregl.Map | null = null;
 	let markers: maplibregl.Marker[] = [];
-	let slots = $state<Draft[]>(SLOTS.map((s) => ({ lat: s.lat, lng: s.lng })));
-	let dirty = $state(false);
+	// Each level keeps its own draft, so switching tabs never loses edits
+	let level = $state<LevelId>('puutarha');
+	let drafts = $state<Record<LevelId, Draft[]>>({
+		puutarha: SLOTS_BY_LEVEL.puutarha.map((s) => ({ lat: s.lat, lng: s.lng })),
+		metsa: SLOTS_BY_LEVEL.metsa.map((s) => ({ lat: s.lat, lng: s.lng })),
+		seutu: SLOTS_BY_LEVEL.seutu.map((s) => ({ lat: s.lat, lng: s.lng }))
+	});
+	let dirtyByLevel = $state<Record<LevelId, boolean>>({
+		puutarha: false,
+		metsa: false,
+		seutu: false
+	});
 	let saving = $state(false);
 	let message = $state('');
 	let messageOk = $state(true);
@@ -29,7 +40,7 @@
 		for (const marker of markers) marker.remove();
 		markers = [];
 		if (!map) return;
-		slots.forEach((slot, i) => {
+		drafts[level].forEach((slot, i) => {
 			const el = document.createElement('button');
 			el.className = 'slot-marker';
 			el.textContent = String(i + 1);
@@ -40,26 +51,33 @@
 			marker.on('dragstart', () => (dragged = true));
 			marker.on('dragend', () => {
 				const pos = marker.getLngLat();
-				slots[i] = { lat: pos.lat, lng: pos.lng };
-				dirty = true;
+				drafts[level][i] = { lat: pos.lat, lng: pos.lng };
+				dirtyByLevel[level] = true;
 				// the dragged flag is cleared only after the click (click follows dragend)
 				setTimeout(() => (dragged = false), 0);
 			});
 			el.addEventListener('click', (e) => {
 				e.stopPropagation();
 				if (dragged) return;
-				slots = slots.filter((_, idx) => idx !== i);
-				dirty = true;
+				drafts[level] = drafts[level].filter((_, idx) => idx !== i);
+				dirtyByLevel[level] = true;
 				syncMarkers();
 			});
 			markers.push(marker);
 		});
 	}
 
-	// Saving writes chests.ts → HMR reloads the page. The map view is kept
-	// in session storage so editing resumes from the same position and
-	// zoom level.
+	function switchLevel(next: LevelId) {
+		level = next;
+		sessionStorage.setItem(LEVEL_KEY, next);
+		syncMarkers();
+	}
+
+	// Saving writes chests.ts → HMR reloads the page. The map view and the
+	// edited layer are kept in session storage so editing resumes from the
+	// same position, zoom level and level tab.
 	const VIEW_KEY = 'editori-nakyma';
+	const LEVEL_KEY = 'editori-taso';
 
 	function savedView(): { center: [number, number]; zoom: number } | null {
 		try {
@@ -75,12 +93,15 @@
 	}
 
 	onMount(() => {
+		const savedLevel = sessionStorage.getItem(LEVEL_KEY) as LevelId | null;
+		if (savedLevel && LEVELS.includes(savedLevel)) level = savedLevel;
+		const first = SLOTS_BY_LEVEL[level][0];
 		const view = savedView();
 		// The editor map keeps place names visible — locations are easier to pick
 		map = new maplibregl.Map({
 			container,
 			style: 'https://tiles.openfreemap.org/styles/liberty',
-			center: view?.center ?? (SLOTS.length ? [SLOTS[0].lng, SLOTS[0].lat] : [24.7095, 60.2375]),
+			center: view?.center ?? (first ? [first.lng, first.lat] : [24.7095, 60.2375]),
 			zoom: view?.zoom ?? 14,
 			attributionControl: { compact: true }
 		});
@@ -96,8 +117,8 @@
 			);
 		});
 		map.on('click', (e) => {
-			slots = [...slots, { lat: e.lngLat.lat, lng: e.lngLat.lng }];
-			dirty = true;
+			drafts[level] = [...drafts[level], { lat: e.lngLat.lat, lng: e.lngLat.lng }];
+			dirtyByLevel[level] = true;
 			syncMarkers();
 		});
 		map.on('load', syncMarkers);
@@ -112,11 +133,11 @@
 			const res = await fetch('/__editori/slotit', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ slots })
+				body: JSON.stringify({ level, slots: drafts[level] })
 			});
 			if (!res.ok) throw new Error(await res.text());
 			const data = await res.json();
-			dirty = false;
+			dirtyByLevel[level] = false;
 			message = fi.editorSaved(data.count);
 			messageOk = true;
 		} catch {
@@ -135,11 +156,20 @@
 
 	<header class="bar">
 		<a class="chip" href="/" aria-label={fi.backToMap}><ArrowLeft size={18} /></a>
-		<span class="chip title"><MapPin size={16} /> {fi.editorTitle} · {slots.length}</span>
-		<button class="btn btn-primary save" disabled={saving || !dirty} onclick={save}>
+		<span class="chip title"><MapPin size={16} /> {fi.editorTitle} · {drafts[level].length}</span>
+		<button class="btn btn-primary save" disabled={saving || !dirtyByLevel[level]} onclick={save}>
 			{fi.editorSave}
 		</button>
 	</header>
+
+	<!-- Layer tabs: each level's locations are edited separately -->
+	<nav class="level-tabs">
+		{#each LEVELS as id (id)}
+			<button class="tab" class:active={id === level} onclick={() => switchLevel(id)}>
+				{fi.levelName[id]}{#if dirtyByLevel[id]}&nbsp;•{/if}
+			</button>
+		{/each}
+	</nav>
 
 	<div class="hint">
 		{#if message}
@@ -188,6 +218,30 @@
 
 	.title { margin-right: auto; }
 	.save { padding: 0.5rem 1.1rem; }
+
+	/* Layer tabs under the header; the active one is filled */
+	.level-tabs {
+		position: absolute;
+		top: calc(4.2rem + env(safe-area-inset-top));
+		left: 1rem;
+		display: flex;
+		gap: 0.4rem;
+		z-index: 10;
+	}
+
+	.tab {
+		padding: 0.4rem 0.85rem;
+		border-radius: 999px;
+		background: var(--bg);
+		color: var(--muted);
+		font-weight: 700;
+		font-size: 0.9rem;
+	}
+
+	.tab.active {
+		background: var(--aurora-green);
+		color: #06222b;
+	}
 
 	.hint {
 		position: absolute;

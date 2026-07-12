@@ -10,12 +10,15 @@
 
 	let {
 		chests = [] as Chest[],
+		level = '',
 		playerLat = null as number | null,
 		playerLng = null as number | null,
 		inRangeId = null as string | null,
 		onchestclick
 	}: {
 		chests: Chest[];
+		/** Current area id — a change re-fits the camera to the new chest set. */
+		level?: string;
 		playerLat: number | null;
 		playerLng: number | null;
 		inRangeId: string | null;
@@ -33,6 +36,7 @@
 	// follows the player only after they tap recenter.
 	let panned = $state(true);
 	let fittedToChests = false;
+	let fittedLevel = '';
 
 	// Off-screen treasures show as small half-dots hugging the screen edges.
 	// A chest beyond a corner gets a hint on both adjacent edges.
@@ -88,10 +92,13 @@
 	onDestroy(() => map?.remove());
 
 	// Initial view: a zoom level that shows all of the day's treasures at a
-	// glance. Runs once, as soon as the chests have loaded from IndexedDB.
+	// glance. Runs once per area — switching the level re-fits the camera
+	// to the new chest set.
 	$effect(() => {
-		if (!map || fittedToChests || chests.length === 0) return;
+		if (!map || chests.length === 0) return;
+		if (fittedToChests && level === fittedLevel) return;
 		fittedToChests = true;
+		fittedLevel = level;
 		const targets = chests.filter((c) => !c.looted);
 		const bounds = new maplibregl.LngLatBounds();
 		for (const c of targets.length > 0 ? targets : chests) bounds.extend([c.lng, c.lat]);

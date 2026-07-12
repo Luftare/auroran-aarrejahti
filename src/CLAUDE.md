@@ -92,9 +92,21 @@ Allowed exceptions — functionality, not decoration:
 - Off-screen chests show as small half-dot hints (0.125 of the marker size,
   `--bg-high`) flush against the screen edges; they may slide all the way to
   the corners. A chest beyond a corner gets a hint on both adjacent edges.
+- Levels ("areas"): three ranges of widening radius around the Träskändä manor
+  park — `puutarha`, `metsa`, `seutu` — each with its own fully independent
+  slot list in `chests.ts` (`SLOTS_BY_LEVEL`). No positions are shared between
+  layers: every location is marked separately per layer in `/editori`. The
+  daily pick is seeded per level, the choice persists in the game state, and
+  new players pick an area in the onboarding ("Valitse alue" step). A layer
+  without marks is shown disabled and cannot be played; `defaultLevel()` (the
+  first layer with slots) is the fallback everywhere. `LevelOptions.svelte`
+  renders the three options; it is shared by the onboarding and the in-game
+  modal.
 - Full-screen map. The HUD floats on top: collected-chest count in the top left,
-  streak in the top right (appears only after the first collected chest), and a
-  status row (distance to the nearest treasure / location status) bottom center.
+  the current area name top center (opens the area-switch modal), streak in the
+  top right (appears only after the first collected chest), and a status row
+  (distance to the nearest treasure / location status) bottom center. Switching
+  the area re-fits the camera to the new chest set.
 - Chests are circular thumbnails on the map; a chest within range is highlighted
   with fill and a pulse. The thumbnail image (`static/arkku.png`) is rendered from
   the 3D chest model onto a transparent background — if the model changes, re-render
@@ -135,10 +147,12 @@ Allowed exceptions — functionality, not decoration:
   testing (50 m/s). Don't break it — it is the only way to test the game on a desktop.
 - Debug buttons (chest-opening test, gem gallery, slot-editor link, onboarding
   replay) are hidden unless the page is opened with the `?debug` query param.
-- The chest-slot editor `/editori` writes locations into the repository: the
-  slot-editor plugin in vite.config.ts answers POST `/__editori/slotit` and
-  replaces the SLOTS block in `src/lib/game/chests.ts`. Works only on the dev
-  server; the editor map keeps place names visible (unlike the game map).
+- The chest-slot editor `/editori` writes locations into the repository one
+  level (layer) at a time: tabs switch the edited layer, each layer keeps its
+  own draft, and the slot-editor plugin in vite.config.ts answers POST
+  `/__editori/slotit` (`{ level, slots }`) by replacing that level's
+  `SLOTS_*` block in `src/lib/game/chests.ts`. Works only on the dev server;
+  the editor map keeps place names visible (unlike the game map).
 
 ## Other conventions
 
