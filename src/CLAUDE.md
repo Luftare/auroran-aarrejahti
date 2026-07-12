@@ -69,9 +69,10 @@ Allowed exceptions — functionality, not decoration:
   `static/aurora.webp` is rendered twice — the base image behind the phone
   (z-index -1) and a `clip-path`-cropped copy of just her fingers on top, so
   she grips the device. The asset is a background-removed, bottom-faded cutout
-  of `aurora.png` (source kept at the repo root); the grip line sits 10.99 %
-  from the image's left edge — the CSS offsets in `Onboarding.svelte` are
-  derived from that, so recompute them if the art changes.
+  of a raw AI-generated portrait (only the cutout is kept in the repo); the
+  grip line sits 10.99 % from the image's left edge — the CSS offsets in
+  `Onboarding.svelte` are derived from that, so recompute them if the art
+  changes.
 - The map opens as an overview fitted to all of the day's chests ("where are
   today's treasures?"). The camera follows the player only after they tap the
   recenter button.
