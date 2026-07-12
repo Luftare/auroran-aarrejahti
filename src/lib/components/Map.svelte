@@ -91,9 +91,10 @@
 
 	onDestroy(() => map?.remove());
 
-	// Initial view: a zoom level that shows all of the day's treasures at a
-	// glance. Runs once per area — switching the level re-fits the camera
-	// to the new chest set.
+	// Initial view: centered on the day's treasures and zoomed so they all
+	// fit with only the padding the floating UI needs — no extra margin.
+	// Runs once per area — switching the level re-fits the camera.
+	// The zoom cap only guards the degenerate case of near-coincident chests.
 	$effect(() => {
 		if (!map || chests.length === 0) return;
 		if (fittedToChests && level === fittedLevel) return;
@@ -104,13 +105,13 @@
 		for (const c of targets.length > 0 ? targets : chests) bounds.extend([c.lng, c.lat]);
 		try {
 			map.fitBounds(bounds, {
-				padding: { top: 90, bottom: 120, left: 40, right: 40 },
+				padding: { top: 90, bottom: 120, left: 44, right: 44 },
 				duration: 0,
-				maxZoom: 15.5
+				maxZoom: 17
 			});
 		} catch {
 			// The padding does not fit a very small viewport — fall back to a smaller one
-			map.fitBounds(bounds, { padding: 24, duration: 0, maxZoom: 15.5 });
+			map.fitBounds(bounds, { padding: 24, duration: 0, maxZoom: 17 });
 		}
 	});
 
