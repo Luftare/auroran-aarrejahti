@@ -68,9 +68,10 @@ Allowed exceptions — functionality, not decoration:
 ## Game view
 
 - Onboarding (`Onboarding.svelte`): new players get a five-step flow before the
-  map — landing view (a CSS mock phone showing the game at a glance), Aurora's
-  story (chests hidden nightly around Träskända manor in Järvenperä), the area
-  choice, and the permission asks. One message per screen ("one spoonful
+  map — landing view (a CSS mock phone showing the game at a glance), a guide
+  page (Aurora reading her map: `static/aurora-kartta.webp`, three numbered
+  steps and the locations-change-daily note), the area choice, and the
+  permission asks. One message per screen ("one spoonful
   at a time"). The CTA and progress dots live in a static footer whose position
   never depends on the step's content. The seen-flag is the IndexedDB key
   `perehdytys`; permission requests run inside the CTA tap so the browser
@@ -107,10 +108,12 @@ Allowed exceptions — functionality, not decoration:
   new players pick an area in the onboarding's "Valitse alue" step: a
   full-bleed preview map (`AreaPreviewMap.svelte`) owns the top, a compact
   segmented pill selector sits at the bottom, toggling glides the camera to
-  that level's treasures, and the CTA reads "Valitse <name>". A layer without
-  marks is shown disabled and cannot be played; `defaultLevel()` (the first
-  layer with slots) is the fallback everywhere. `LevelOptions.svelte` renders
-  the three option rows for the in-game modal and the level-complete view.
+  that level's treasures, and the CTA reads "Valitse <name>". The in-game
+  area switcher (`LevelPicker.svelte`, from the HUD level chip) is the same
+  page plus a gray "Sulje" secondary button. A layer without marks is shown
+  disabled and cannot be played; `defaultLevel()` (the first layer with
+  slots) is the fallback everywhere. `LevelOptions.svelte` renders the three
+  option rows for the level-complete view.
 - Full-screen map. The HUD floats on top: collected-chest count in the top left,
   the current area name top center (opens the area-switch modal), streak in the
   top right (appears only after the first collected chest). The bottom status
@@ -120,6 +123,12 @@ Allowed exceptions — functionality, not decoration:
   it is (updates live as the player walks); the tapped chest rises to the top
   of the chest z-order and tapping anywhere else dismisses the bubble. An
   in-range chest still opens directly.
+- Entering the map after onboarding greets the player with the start-of-hunt
+  modal (`StartHunt.svelte`): a centered card over a dimmed scrim (the map
+  shows around the edges) with running Aurora (`static/aurora-juoksee.webp`),
+  the nearest-treasure distance and a move-carefully reminder, CTA "Menoksi!".
+- Each area has an icon (`levelIcons.ts`: flower/trees/mountain) shown in the
+  level lists, the onboarding area tabs and the HUD level chip.
 - Chests are circular thumbnails on the map; a chest within range is highlighted
   with fill and a pulse. The thumbnail image (`static/arkku.png`) is rendered from
   the 3D chest model onto a transparent background — if the model changes, re-render
@@ -185,4 +194,7 @@ Allowed exceptions — functionality, not decoration:
   strings in components.
 - Roundness is the design language: chips and buttons are pills
   (`border-radius: 999px`), map controls and chest thumbnails circles.
+- Player-facing CTA buttons are always gold (`.btn-gold`); plain gray `.btn`
+  is for secondary actions. Green `.btn-primary` is reserved for dev tools
+  (the editor).
 - Svelte 5 runes (`$state`, `$derived`, `$effect`) — no legacy store syntax.

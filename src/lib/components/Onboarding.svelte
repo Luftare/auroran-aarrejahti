@@ -9,6 +9,7 @@
 	import { compassSupported, requestCompass } from '$lib/client/compass.svelte';
 	import { defaultLevel, LEVELS, SLOTS_BY_LEVEL, type LevelId } from '$lib/game/chests';
 	import AreaPreviewMap from './AreaPreviewMap.svelte';
+	import { LEVEL_ICONS } from './levelIcons';
 	import Compass from '@lucide/svelte/icons/compass';
 	import Flame from '@lucide/svelte/icons/flame';
 	import MapPin from '@lucide/svelte/icons/map-pin';
@@ -87,39 +88,9 @@
 		void requestCompass().then(() => oncomplete());
 	}
 
-	// Starfield of the story's night scene: position (%), size (px) and
-	// twinkle delay/duration (s). Hand-scattered so it renders the same
-	// every time, sparser near the bottom where the chest sits.
-	const NIGHT_STARS = [
-		{ x: 4, y: 16, s: 3, d: 0.2, t: 2.6 },
-		{ x: 11, y: 4, s: 4, d: 1.4, t: 3.0 },
-		{ x: 19, y: 26, s: 2, d: 0.7, t: 2.3 },
-		{ x: 27, y: 10, s: 3, d: 2.1, t: 2.8 },
-		{ x: 35, y: 1, s: 2, d: 0.4, t: 3.2 },
-		{ x: 43, y: 20, s: 4, d: 1.8, t: 2.5 },
-		{ x: 52, y: 6, s: 3, d: 0.9, t: 2.9 },
-		{ x: 60, y: 24, s: 2, d: 2.4, t: 2.4 },
-		{ x: 68, y: 2, s: 4, d: 0.1, t: 3.1 },
-		{ x: 76, y: 14, s: 3, d: 1.2, t: 2.7 },
-		{ x: 85, y: 5, s: 2, d: 1.9, t: 2.4 },
-		{ x: 93, y: 22, s: 3, d: 0.5, t: 3.3 },
-		{ x: 8, y: 42, s: 2, d: 2.2, t: 2.6 },
-		{ x: 24, y: 52, s: 3, d: 1.1, t: 3.0 },
-		{ x: 48, y: 38, s: 2, d: 0.3, t: 2.5 },
-		{ x: 72, y: 48, s: 2, d: 1.6, t: 2.8 },
-		{ x: 90, y: 40, s: 3, d: 2.5, t: 2.4 },
-		{ x: 16, y: 68, s: 2, d: 0.8, t: 3.1 },
-		{ x: 82, y: 66, s: 2, d: 1.5, t: 2.7 }
-	];
 </script>
 
 <div class="overlay">
-	{#if step === 0}
-		<!-- "Kehitetty Järvenperässä" stamp in the corner of the front page;
-		     the image is the stamp's text, so the alt carries it -->
-		<img class="stamp" src="/leima.webp" alt={fi.onboardingStamp} />
-	{/if}
-
 	<div class="body">
 		{#key step}
 			<section class="step" class:area={step === AREA_STEP}>
@@ -175,18 +146,15 @@
 
 					<p class="lead">{fi.onboardingLead}</p>
 				{:else if step === 1}
-					<!-- Night scene: the chest under a starry sky -->
-					<div class="night" aria-hidden="true">
-						{#each NIGHT_STARS as star, i (i)}
-							<span
-								class="nstar"
-								style="left:{star.x}%;top:{star.y}%;width:{star.s}px;height:{star.s}px;animation-delay:{star.d}s;animation-duration:{star.t}s"
-							></span>
+					<!-- The guide: Aurora reading her map, three numbered steps and
+					     the note that locations change daily -->
+					<img class="guide-aurora" src="/aurora-kartta.webp" alt="" />
+					<ol class="guide-steps">
+						{#each fi.onboardingGuideSteps as text, i (i)}
+							<li><span class="guide-num">{i + 1}</span>{text}</li>
 						{/each}
-						<img src="/arkku.png" alt="" width="84" height="84" />
-					</div>
-					<p>{fi.onboardingStory1}</p>
-					<p class="muted">{fi.onboardingStory2}</p>
+					</ol>
+					<p class="guide-note">{fi.onboardingGuideNote}</p>
 				{:else if step === AREA_STEP}
 					<!-- Area choice: the map owns the top, a compact segmented
 					     selector sits at the bottom. Toggling glides the camera
@@ -197,23 +165,24 @@
 					</div>
 					<div class="area-tabs">
 						{#each LEVELS as id (id)}
+							{@const TabIcon = LEVEL_ICONS[id]}
 							<button
 								class="area-tab"
 								class:active={id === chosenLevel}
 								disabled={SLOTS_BY_LEVEL[id].length === 0}
 								onclick={() => (chosenLevel = id)}
 							>
+								<TabIcon size={16} />
 								{fi.levelName[id]}
 							</button>
 						{/each}
 					</div>
 				{:else if step === LOCATION_STEP}
 					<span class="pin"><MapPin size={34} color="var(--aurora-green)" /></span>
-					<h2>{fi.onboardingLocationTitle}</h2>
 					{#if locState === 'failed'}
 						<p>{geo.status === 'denied' ? fi.locationDenied : fi.locationUnavailable}</p>
 					{:else}
-						<p>{fi.onboardingLocationBody}</p>
+						<h2>{fi.onboardingLocationTitle}</h2>
 					{/if}
 				{:else}
 					<span class="pin"><Compass size={34} color="var(--aurora-green)" /></span>
@@ -227,9 +196,7 @@
 	<!-- Static footer: the CTA and progress dots stay put across steps -->
 	<div class="footer">
 		<button
-			class="btn cta"
-			class:btn-primary={step < LOCATION_STEP}
-			class:btn-gold={step >= LOCATION_STEP}
+			class="btn btn-gold cta"
 			disabled={step === LOCATION_STEP && locState === 'waiting'}
 			onclick={next}>{ctaLabel}</button
 		>
@@ -254,33 +221,6 @@
 		display: flex;
 		flex-direction: column;
 		padding-top: calc(1rem + env(safe-area-inset-top));
-	}
-
-	/* The stamp slams into the top-left corner of the front page */
-	.stamp {
-		position: absolute;
-		top: calc(0.6rem + env(safe-area-inset-top));
-		left: 0.8rem;
-		width: 96px;
-		height: auto;
-		z-index: 1;
-		pointer-events: none;
-		animation: stamp-in 0.4s 0.2s ease-out both;
-	}
-
-	@keyframes stamp-in {
-		from {
-			transform: rotate(-12deg) scale(1.9);
-			opacity: 0;
-		}
-		70% {
-			transform: rotate(-12deg) scale(0.93);
-			opacity: 1;
-		}
-		to {
-			transform: rotate(-12deg) scale(1);
-			opacity: 1;
-		}
 	}
 
 	/* The step content scrolls if it must; the footer below never moves */
@@ -396,14 +336,15 @@
 		margin-right: 2.5rem;
 	}
 
-	/* The bezel is the frame; the screen shows a stylized game view */
+	/* The bezel is the frame; the screen shows a stylized game view.
+	   Sized at 0.8x of the original hero. */
 	.phone {
 		position: relative;
-		width: min(50vw, 190px);
+		width: min(40vw, 152px);
 		aspect-ratio: 9 / 18.5;
 		background: var(--bg-high);
-		border-radius: 30px;
-		padding: 7px;
+		border-radius: 26px;
+		padding: 6px;
 	}
 
 	/* Short screens: shrink the hero so the whole spoonful fits without
@@ -415,11 +356,7 @@
 		}
 
 		.phone {
-			width: min(38vw, 122px);
-		}
-
-		.stamp {
-			width: 70px;
+			width: min(30vw, 98px);
 		}
 	}
 
@@ -657,32 +594,53 @@
 		border-bottom: none;
 	}
 
-	/* ---- Story night scene ---- */
+	/* ---- Guide page: Aurora reading her map, numbered steps and a note ---- */
 
-	.night {
-		position: relative;
-		width: min(70vw, 240px);
-		height: 140px;
+	.guide-aurora {
+		width: auto;
+		height: min(32vh, 280px);
+	}
+
+	.guide-steps {
+		list-style: none;
+		margin: 0.4rem 0 0;
+		padding: 0;
 		display: flex;
-		align-items: flex-end;
-		justify-content: center;
+		flex-direction: column;
+		gap: 0.85rem;
+		text-align: left;
 	}
 
-	.nstar {
-		position: absolute;
+	.guide-steps li {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-weight: 600;
+		font-size: 1.05rem;
+	}
+
+	.guide-num {
+		flex: none;
+		width: 28px;
+		height: 28px;
 		border-radius: 50%;
-		background: var(--text);
-		animation: twinkle ease-in-out infinite;
+		background: var(--aurora-green);
+		color: #06222b;
+		font-weight: 800;
+		font-size: 0.95rem;
+		display: grid;
+		place-items: center;
 	}
 
-	@keyframes twinkle {
-		0%,
-		100% {
-			opacity: 0.25;
-		}
-		50% {
-			opacity: 0.9;
-		}
+	/* Small info box under the steps */
+	.guide-note {
+		margin-top: 0.5rem;
+		background: var(--bg-raised);
+		border-radius: var(--radius);
+		padding: 0.6rem 1rem;
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: var(--muted);
 	}
 
 	/* ---- Area choice: a full-bleed map step, unlike the other spoonfuls ---- */
@@ -728,7 +686,10 @@
 	}
 
 	.area-tab {
-		padding: 0.5rem 1.15rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.5rem 1.05rem;
 		border-radius: 999px;
 		background: var(--bg-raised);
 		color: var(--muted);

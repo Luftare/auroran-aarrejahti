@@ -202,7 +202,7 @@
 					{/each}
 				</div>
 			{/if}
-			<span class="btn btn-primary cta">
+			<span class="btn btn-gold cta">
 				{rewardIndex < queue.length - 1 || firstToday ? fi.next : fi.backToMap}
 			</span>
 		</button>
@@ -246,7 +246,7 @@
 				{/each}
 			</div>
 
-			<span class="btn btn-primary cta">{fi.backToMap}</span>
+			<span class="btn btn-gold cta">{fi.backToMap}</span>
 		</button>
 	{/if}
 

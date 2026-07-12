@@ -47,7 +47,7 @@
 		/>
 	</div>
 
-	<button class="btn btn-primary close" onclick={onclose}>{fi.backToMap}</button>
+	<button class="btn btn-gold close" onclick={onclose}>{fi.backToMap}</button>
 </div>
 
 <style>

@@ -26,6 +26,8 @@
 	import LevelComplete from '$lib/components/LevelComplete.svelte';
 	import LevelPicker from '$lib/components/LevelPicker.svelte';
 	import Onboarding from '$lib/components/Onboarding.svelte';
+	import StartHunt from '$lib/components/StartHunt.svelte';
+	import { LEVEL_ICONS } from '$lib/components/levelIcons';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Flame from '@lucide/svelte/icons/flame';
 	import FlaskConical from '@lucide/svelte/icons/flask-conical';
@@ -44,6 +46,9 @@
 	let gemsOpen = $state(false);
 	// Area switcher (opens from the top-center level chip)
 	let levelPickerOpen = $state(false);
+	// Start-of-hunt modal: greets the player entering the map after onboarding
+	let startHuntOpen = $state(false);
+	const LevelIcon = $derived(LEVEL_ICONS[game.level]);
 	// Level-complete celebration: queued when the collect empties the level,
 	// shown as the last view once the chest overlay has closed
 	let pendingLevelComplete = false;
@@ -137,6 +142,8 @@
 		onboarding = false;
 		startPlayer();
 		void idbSet(ONBOARDED_KEY, '1');
+		// Greet the fresh hunter on the way to the map
+		startHuntOpen = true;
 	}
 
 	// Debug: replay the onboarding as a new player would see it
@@ -187,7 +194,9 @@
 			<img class="chip-chest" src="/arkku.png" alt="" width="22" height="22" />
 			{game.total}
 		</button>
+		<!-- The icon inherits the text color to keep the bar calm -->
 		<button class="chip level-chip" title={fi.chooseArea} onclick={() => (levelPickerOpen = true)}>
+			<LevelIcon size={16} />
 			{fi.levelName[game.level]}
 		</button>
 		{#if game.total > 0}
@@ -286,6 +295,13 @@
 			completedLevel={levelCompleteLevel}
 			onpick={pickNextLevel}
 			onclose={() => (levelCompleteStatuses = null)}
+		/>
+	{/if}
+
+	{#if startHuntOpen}
+		<StartHunt
+			dist={nearest ? fi.formatDistance(nearest.distance) : null}
+			onclose={() => (startHuntOpen = false)}
 		/>
 	{/if}
 

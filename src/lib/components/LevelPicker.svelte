@@ -1,9 +1,13 @@
 <script lang="ts">
-	// Area-switch modal: opened from the HUD's top-center level chip.
-	// Picking an area applies it immediately and closes the modal.
+	// Area switcher, opened from the HUD's top-center level chip. The same
+	// page as the onboarding's area step: a full-bleed preview map on top,
+	// compact segmented tabs at the bottom, and a "Valitse <name>" CTA.
+	// Toggling only moves the preview camera — the level is applied when
+	// the CTA confirms it.
 	import { fi } from '$lib/fi';
-	import type { LevelId } from '$lib/game/chests';
-	import LevelOptions from './LevelOptions.svelte';
+	import { LEVELS, SLOTS_BY_LEVEL, type LevelId } from '$lib/game/chests';
+	import AreaPreviewMap from './AreaPreviewMap.svelte';
+	import { LEVEL_ICONS } from './levelIcons';
 
 	let {
 		level,
@@ -15,20 +19,43 @@
 		onclose: () => void;
 	} = $props();
 
-	function pick(next: LevelId) {
-		onselect(next);
+	// Deliberately captures only the initial value: the prop seeds the toggle
+	// svelte-ignore state_referenced_locally
+	let chosenLevel = $state<LevelId>(level);
+
+	function confirm() {
+		onselect(chosenLevel);
 		onclose();
 	}
 </script>
 
 <div class="overlay">
-	<p class="title">{fi.chooseArea}</p>
-
-	<div class="options">
-		<LevelOptions selected={level} onselect={pick} />
+	<div class="area-map">
+		<AreaPreviewMap level={chosenLevel} />
+		<span class="area-title">{fi.chooseArea}</span>
 	</div>
 
-	<button class="btn close" onclick={onclose}>{fi.close}</button>
+	<div class="area-tabs">
+		{#each LEVELS as id (id)}
+			{@const TabIcon = LEVEL_ICONS[id]}
+			<button
+				class="area-tab"
+				class:active={id === chosenLevel}
+				disabled={SLOTS_BY_LEVEL[id].length === 0}
+				onclick={() => (chosenLevel = id)}
+			>
+				<TabIcon size={16} />
+				{fi.levelName[id]}
+			</button>
+		{/each}
+	</div>
+
+	<div class="footer">
+		<button class="btn btn-gold cta" onclick={confirm}>
+			{fi.onboardingPickLevel(fi.levelName[chosenLevel])}
+		</button>
+		<button class="btn cta secondary" onclick={onclose}>{fi.close}</button>
+	</div>
 </div>
 
 <style>
@@ -39,24 +66,79 @@
 		background: var(--bg);
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		padding: calc(1.2rem + env(safe-area-inset-top)) 1rem calc(1.5rem + env(safe-area-inset-bottom));
-		overflow-y: auto;
+		padding-top: calc(1rem + env(safe-area-inset-top));
 	}
 
-	.title {
-		font-size: 1.25rem;
+	.area-map {
+		position: relative;
+		flex: 1;
+		width: 100%;
+	}
+
+	/* Title floats over the map like the game's HUD chips */
+	.area-title {
+		position: absolute;
+		top: 0.7rem;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 5;
+		padding: 0.5rem 1.1rem;
+		border-radius: 999px;
+		background: var(--bg);
 		font-weight: 800;
-		margin: 0 0 0.6rem;
+		font-size: 1.05rem;
+		pointer-events: none;
 	}
 
-	.options {
-		width: min(92vw, 420px);
-		margin-top: 0.4rem;
+	/* Compact segmented selector: three pills, the active one filled */
+	.area-tabs {
+		flex: none;
+		display: flex;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.9rem 1rem 0.1rem;
 	}
 
-	.close {
-		margin-top: auto;
-		width: min(60vw, 240px);
+	.area-tab {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.5rem 1.05rem;
+		border-radius: 999px;
+		background: var(--bg-raised);
+		color: var(--muted);
+		font-weight: 700;
+		font-size: 0.98rem;
+		transition: background 150ms ease, color 150ms ease;
+	}
+
+	.area-tab.active {
+		background: var(--aurora-green);
+		color: #06222b;
+	}
+
+	.area-tab:disabled {
+		opacity: 0.4;
+	}
+
+	.footer {
+		flex: none;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.9rem;
+		padding: 0.6rem 1.6rem calc(1.4rem + env(safe-area-inset-bottom));
+	}
+
+	.cta {
+		width: min(78vw, 320px);
+		font-weight: 700;
+		font-size: 1.05rem;
+	}
+
+	.cta.secondary {
+		font-size: 0.95rem;
+		padding: 0.65rem 1.4rem;
+		color: var(--muted);
 	}
 </style>

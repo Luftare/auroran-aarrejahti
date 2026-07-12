@@ -5,10 +5,8 @@
 	// level-complete view (which passes `completed` to show ticks).
 	import { fi } from '$lib/fi';
 	import { LEVELS, SLOTS_BY_LEVEL, type LevelId } from '$lib/game/chests';
+	import { LEVEL_ICONS } from './levelIcons';
 	import Check from '@lucide/svelte/icons/check';
-	import Flower2 from '@lucide/svelte/icons/flower-2';
-	import Trees from '@lucide/svelte/icons/trees';
-	import Mountain from '@lucide/svelte/icons/mountain';
 
 	let {
 		selected,
@@ -26,8 +24,7 @@
 		onselect: (level: LevelId) => void;
 	} = $props();
 
-	const ICONS = { puutarha: Flower2, metsa: Trees, seutu: Mountain } as const;
-	// All list icons share one color (same as the onboarding how-to icons)
+	// All list icons share one color
 	const ICON_COLOR = 'var(--aurora-green)';
 
 	// Confetti burst around the celebrated row, timed to the blossom moment
@@ -54,7 +51,7 @@
 
 <div class="levels">
 	{#each LEVELS as level (level)}
-		{@const Icon = ICONS[level]}
+		{@const Icon = LEVEL_ICONS[level]}
 		<button
 			class="level-row"
 			class:selected={level === selected}

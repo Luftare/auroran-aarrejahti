@@ -34,7 +34,7 @@ export const SLOTS_PUUTARHA: Slot[] = [
 	{ id: 'puutarha-10', lat: 60.23610385274284, lng: 24.709893781836996 },
 	{ id: 'puutarha-11', lat: 60.23564546604251, lng: 24.7094181088286 },
 	{ id: 'puutarha-12', lat: 60.235625622317656, lng: 24.709989715889094 },
-	{ id: 'puutarha-13', lat: 60.235893511589836, lng: 24.710425416375926 },
+	{ id: 'puutarha-13', lat: 60.2358323406238, lng: 24.709862313032573 },
 	{ id: 'puutarha-14', lat: 60.23569705967111, lng: 24.708418795785718 },
 	{ id: 'puutarha-15', lat: 60.23600463538608, lng: 24.70810301286457 },
 	{ id: 'puutarha-16', lat: 60.23634480357268, lng: 24.709220485904183 },
@@ -61,7 +61,17 @@ export const SLOTS_PUUTARHA: Slot[] = [
 	{ id: 'puutarha-37', lat: 60.23677085241354, lng: 24.709920890614057 },
 	{ id: 'puutarha-38', lat: 60.23657007146619, lng: 24.71147460528809 },
 	{ id: 'puutarha-39', lat: 60.2360020016327, lng: 24.711563388983166 },
-	{ id: 'puutarha-40', lat: 60.23558818594168, lng: 24.710833389707545 }
+	{ id: 'puutarha-40', lat: 60.23558818594168, lng: 24.710833389707545 },
+	{ id: 'puutarha-41', lat: 60.2374412819496, lng: 24.7080697306194 },
+	{ id: 'puutarha-42', lat: 60.23727404369396, lng: 24.708490851540517 },
+	{ id: 'puutarha-43', lat: 60.23678752755097, lng: 24.70745719109732 },
+	{ id: 'puutarha-44', lat: 60.23636562098446, lng: 24.707365310168825 },
+	{ id: 'puutarha-45', lat: 60.23592356559044, lng: 24.707458095593893 },
+	{ id: 'puutarha-46', lat: 60.23552445439955, lng: 24.707611230474384 },
+	{ id: 'puutarha-47', lat: 60.236638152530816, lng: 24.709548386712925 },
+	{ id: 'puutarha-48', lat: 60.236094611755675, lng: 24.709356968112047 },
+	{ id: 'puutarha-49', lat: 60.23629226398981, lng: 24.709755118801525 },
+	{ id: 'puutarha-50', lat: 60.23579813118832, lng: 24.71038297162613 }
 ];
 
 export const SLOTS_METSA: Slot[] = [
@@ -81,7 +91,7 @@ export const SLOTS_METSA: Slot[] = [
 	{ id: 'metsa-14', lat: 60.23525959797951, lng: 24.712872770649142 },
 	{ id: 'metsa-15', lat: 60.23572185351344, lng: 24.712006286035944 },
 	{ id: 'metsa-16', lat: 60.23507019973175, lng: 24.710014664685872 },
-	{ id: 'metsa-17', lat: 60.23326710280557, lng: 24.706945362433316 },
+	{ id: 'metsa-17', lat: 60.23327920487634, lng: 24.707335107673998 },
 	{ id: 'metsa-18', lat: 60.23366973427645, lng: 24.706224479370235 },
 	{ id: 'metsa-19', lat: 60.233621269639, lng: 24.708927790856848 },
 	{ id: 'metsa-20', lat: 60.233460963020065, lng: 24.709746293501524 },
@@ -136,7 +146,12 @@ export const SLOTS_METSA: Slot[] = [
 	{ id: 'metsa-69', lat: 60.23287025521293, lng: 24.712861441563632 },
 	{ id: 'metsa-70', lat: 60.23176304307751, lng: 24.712734286486437 },
 	{ id: 'metsa-71', lat: 60.23129706451573, lng: 24.705337468508986 },
-	{ id: 'metsa-72', lat: 60.23152096075631, lng: 24.705117236736726 }
+	{ id: 'metsa-72', lat: 60.23152096075631, lng: 24.705117236736726 },
+	{ id: 'metsa-73', lat: 60.234983531029116, lng: 24.70884491585204 },
+	{ id: 'metsa-74', lat: 60.235007671589386, lng: 24.715103918315464 },
+	{ id: 'metsa-75', lat: 60.23383936168534, lng: 24.710211320938328 },
+	{ id: 'metsa-76', lat: 60.233802805393566, lng: 24.70639432877482 },
+	{ id: 'metsa-77', lat: 60.234261943728484, lng: 24.707189680280663 }
 ];
 
 export const SLOTS_SEUTU: Slot[] = [
@@ -277,13 +292,16 @@ export function defaultLevel(): LevelId {
 }
 
 /** How many chests per day. */
-export const DAILY_COUNT = 6;
+export const DAILY_COUNT = 5;
 
-/** "Far" = this fraction of the largest possible pairwise slot distance. */
-const FAR_FRACTION = 0.7;
+/** "Far" = this fraction of the largest possible pairwise slot distance.
+ *  Moderate on purpose: the far pick should escape the clusters, not race
+ *  to the opposite corner of the area. */
+const FAR_FRACTION = 0.55;
 
-/** How many of the day's chests are drawn completely freely (allowed to cluster). */
-const FREE_PICKS = DAILY_COUNT - 2;
+/** How many of the day's chests are drawn completely freely (allowed to
+ *  cluster) — the one remaining pick is forced away from them. */
+const FREE_PICKS = DAILY_COUNT - 1;
 
 /** How close you must walk to a chest (meters). */
 export const LOOT_RADIUS_M = 10;
@@ -350,13 +368,13 @@ function minDistTo(slot: Slot, group: Slot[]): number {
 }
 
 /**
- * The day's chest locations for a level, avoiding clustering: the first four
- * are drawn completely freely (they may land close together), but the last
- * two are forced far away from them — at least ~70% of the level's largest
- * possible pairwise distance. This way at least one chest pair is always far
- * apart, and all six never pile up in the same corner. If there are no
- * candidates far enough away (the free four already spread across the whole
- * area), the farthest ones available are taken.
+ * The day's chest locations for a level, mostly free but never one blob:
+ * all picks except the last are drawn completely freely (they may land
+ * close together), and the final one is forced away from them — at least
+ * ~55% of the level's largest possible pairwise distance. This keeps at
+ * least one chest clear of any cluster without spreading the whole set to
+ * the corners. If no candidate is far enough away (the free picks already
+ * spread across the whole area), the farthest one available is taken.
  *
  * All picks use deterministic randomness seeded from the date and the level —
  * the same day gives the same locations to all players on the same level.

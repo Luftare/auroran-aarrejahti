@@ -6,15 +6,12 @@ export const fi = {
 	// Onboarding — the story and instructions, one spoonful at a time
 	onboardingLead: 'Aloita koko perheen hauska aarrejahti Träskändan kartanon kulmilla!',
 	onboardingStart: 'Aloita',
-	onboardingStamp: 'Kehitetty Järvenperässä',
-	onboardingStory1:
-		'Joka yö Aurora kätkee uusia aarteita vanhoille kotikulmilleen...',
-	onboardingStory2: 'Aamulla arkut odottavat löytäjäänsä.',
+	onboardingGuideSteps: ['Valitse pelialue', 'Kävele aarrearkkujen luo', 'Kerää arkkujen aarteet'],
+	onboardingGuideNote: 'Aarteiden sijainnit vaihtuvat joka päivä!',
 	onboardingPickLevel: (name: string) => `Valitse ${name}`,
-	onboardingLocationTitle: 'Vielä yksi juttu',
-	onboardingLocationBody:
-		'Peli tarvitsee toimiakseen sijaintiasi.',
-	onboardingAllowLocation: 'Salli sijainti',
+	onboardingLocationTitle:
+		'Peli tarvitsee toimiakseen sijaintitietoa.',
+	onboardingAllowLocation: 'Salli sijaintitieto',
 	onboardingCompassTitle: 'Otetaanko kompassi käyttöön?',
 	onboardingCompassBody:
 		'Kompassi näyttää kartalla, mihin suuntaan olet katsomassa. Se on vapaaehtoinen apu.',
@@ -40,13 +37,19 @@ export const fi = {
 		metsa: 'Reipas kierros kartanon metsässä.',
 		seutu: 'Koko Järvenperä tutkittavana.'
 	} as Record<string, string>,
-	chooseArea: 'Valitse alue',
+	chooseArea: 'Valitse pelialue',
 
 	// Level completed: celebration and moving to the next area
 	levelCompleteTitle: 'Kaikki aarteet löydetty!',
 	allLevelsDoneTitle: 'Uskomatonta!',
 	allLevelsDoneBody:
 		'Löysit tänään kaikkien alueiden kaikki aarteet. Uudet aarteet ilmestyvät keskiyöllä.',
+
+	// Start-of-hunt modal, shown when the map opens after picking an area
+	startHuntTitle: 'Oletko valmis?',
+	startHuntNearest: (dist: string) => `Lähin aarre on ${dist} päässä.`,
+	startHuntCareful: 'Muista kulkea varovasti!',
+	startHuntCta: 'Menoksi!',
 
 	// Map
 	chestDistance: (dist: string) => `${dist} päässä`,
