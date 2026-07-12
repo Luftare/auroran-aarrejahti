@@ -2,6 +2,16 @@
    The style is completely flat and borderless: no shadows, no glows, no borders,
    no gradients. Surfaces differ by background color only. See src/CLAUDE.md. */
 
+/* Self-hosted (the game must work without any server but the map tiles).
+   Vidaloka ships only the 400 weight — bolder weights are synthesized. */
+@font-face {
+	font-family: 'Vidaloka';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/vidaloka.woff2') format('woff2');
+}
+
 :root {
 	--bg: #0b1d26;
 	--bg-raised: #102833;
@@ -29,7 +39,7 @@ body {
 	padding: 0;
 	background: var(--bg);
 	color: var(--text);
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	font-family: 'Vidaloka', Georgia, 'Times New Roman', serif;
 	font-size: 16px;
 	line-height: 1.45;
 	min-height: 100dvh;
@@ -46,6 +56,13 @@ h1, h2, h3 {
 }
 
 a { color: var(--aurora-teal); }
+
+/* MapLibre controls (attribution) set their own font stack — keep the whole
+   app in the game font. Street names on the map come from tile glyphs and
+   are not affected. */
+html .maplibregl-map {
+	font-family: 'Vidaloka', Georgia, 'Times New Roman', serif;
+}
 
 button {
 	font: inherit;

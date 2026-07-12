@@ -45,6 +45,15 @@ Allowed exceptions — functionality, not decoration:
   (`--bg-high`) is allowed — the light map base needs the contrast.
 - Outlines in game art (the chest SVG) are illustration, not UI chrome.
 
+## Typography
+
+- The only UI font is **Vidaloka** (serif), applied to everything through
+  `body` in `app.css`; buttons and inputs use `font: inherit`. It is
+  self-hosted (`static/vidaloka.woff2`, preloaded in `app.html`) — no font
+  CDN, per the no-server rule. Vidaloka ships only the 400 weight, so bold
+  weights are browser-synthesized. Map street names come from tile glyphs
+  and keep the map style's font.
+
 ## Icons
 
 - The icon library is **Lucide** (`@lucide/svelte`). No emoji in the UI.

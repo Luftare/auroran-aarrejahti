@@ -36,7 +36,12 @@
 		{#key step}
 			<section class="step">
 				{#if step === 0}
-					<h1>{fi.appName}</h1>
+					<!-- Hero title: one word per line -->
+					<h1>
+						{#each fi.appName.split(' ') as word (word)}
+							<span>{word}</span>
+						{/each}
+					</h1>
 
 					<!-- Mock phone: a miniature "screenshot" of the game view — map,
 					     treasure markers, player dot, HUD chips and the distance hint.
@@ -44,35 +49,37 @@
 					     sits behind the phone (z-index -1) and a clipped copy of just
 					     her fingers renders on top, so she grips the device.
 					     Pure illustration; the flatness rule does not apply. -->
-					<div class="phone" aria-hidden="true">
-						<img class="aurora aurora-peek" src="/aurora.webp" alt="" />
-						<img class="aurora aurora-fingers" src="/aurora.webp" alt="" />
-						<div class="screen">
-							<span class="park p1"></span>
-							<span class="park p2"></span>
-							<span class="road r1"></span>
-							<span class="road r2"></span>
-							<span class="road r3"></span>
-							<span class="mock-chest" style="left:26%;top:32%"
-								><span class="face"><img src="/arkku.png" alt="" /></span></span
-							>
-							<span class="mock-chest" style="left:72%;top:44%"
-								><span class="face"><img src="/arkku.png" alt="" /></span></span
-							>
-							<span class="mock-chest big" style="left:44%;top:64%"
-								><span class="face"><img src="/arkku.png" alt="" /></span></span
-							>
-							<span class="mock-player" style="left:60%;top:80%"
-								><span class="mp-pulse"></span><span class="mp-core"></span></span
-							>
-							<span class="mock-notch"></span>
-							<span class="mock-chip chip-left"
-								><img src="/arkku.png" alt="" width="12" height="12" />12</span
-							>
-							<span class="mock-chip chip-right"
-								><Flame size={11} color="var(--gold)" fill="var(--gold)" />4</span
-							>
-							<span class="mock-hint">{fi.distanceToNearest(fi.formatDistance(200))}</span>
+					<div class="phone-tilt" aria-hidden="true">
+						<div class="phone">
+							<img class="aurora aurora-peek" src="/aurora.webp" alt="" />
+							<img class="aurora aurora-fingers" src="/aurora.webp" alt="" />
+							<div class="screen">
+								<span class="park p1"></span>
+								<span class="park p2"></span>
+								<span class="road r1"></span>
+								<span class="road r2"></span>
+								<span class="road r3"></span>
+								<span class="mock-chest" style="left:26%;top:32%"
+									><span class="face"><img src="/arkku.png" alt="" /></span></span
+								>
+								<span class="mock-chest" style="left:72%;top:44%"
+									><span class="face"><img src="/arkku.png" alt="" /></span></span
+								>
+								<span class="mock-chest big" style="left:44%;top:64%"
+									><span class="face"><img src="/arkku.png" alt="" /></span></span
+								>
+								<span class="mock-player" style="left:60%;top:80%"
+									><span class="mp-pulse"></span><span class="mp-core"></span></span
+								>
+								<span class="mock-notch"></span>
+								<span class="mock-chip chip-left"
+									><img src="/arkku.png" alt="" width="12" height="12" />12</span
+								>
+								<span class="mock-chip chip-right"
+									><Flame size={11} color="var(--gold)" fill="var(--gold)" />4</span
+								>
+								<span class="mock-hint">{fi.distanceToNearest(fi.formatDistance(200))}</span>
+							</div>
 						</div>
 					</div>
 
@@ -176,9 +183,14 @@
 	}
 
 	h1 {
-		font-size: 1.65rem;
+		font-size: 3rem;
 		font-weight: 800;
+		line-height: 1.08;
 		margin: 0;
+	}
+
+	h1 span {
+		display: block;
 	}
 
 	h2 {
@@ -232,8 +244,17 @@
 
 	/* ---- Mock phone (landing) ---- */
 
-	/* The bezel is the frame; the screen shows a stylized game view.
-	   Shifted slightly left so peeking Aurora fits on narrow screens. */
+	/* The rotation lives on this wrapper, not on .phone: a transform on
+	   .phone would create a stacking context and pull Aurora's z-index -1
+	   base image in front of the bezel. Shifted slightly left so peeking
+	   Aurora fits on narrow screens. */
+	.phone-tilt {
+		transform: rotate(-3deg);
+		flex: none;
+		margin-right: 2.5rem;
+	}
+
+	/* The bezel is the frame; the screen shows a stylized game view */
 	.phone {
 		position: relative;
 		width: min(50vw, 190px);
@@ -241,8 +262,19 @@
 		background: var(--bg-high);
 		border-radius: 30px;
 		padding: 7px;
-		flex: none;
-		margin-right: 2.5rem;
+	}
+
+	/* Short screens: shrink the hero so the whole spoonful fits without
+	   scrolling. Must come after the base rules — same specificity, and a
+	   media query adds none, so source order decides. */
+	@media (max-height: 640px) {
+		h1 {
+			font-size: 2.3rem;
+		}
+
+		.phone {
+			width: min(38vw, 122px);
+		}
 	}
 
 	/* Aurora behind the phone: the grip line in the image (10.99% from its
