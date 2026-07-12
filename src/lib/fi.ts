@@ -39,10 +39,10 @@ export const fi = {
 	zoomOut: 'Loitonna',
 
 	// Opening a chest — the chest holds the treasures
-	tapToOpen: 'Avaa arkku!',
+	tapToOpen: 'Tökkää arkkua!',
 	showLoot: 'Näytä aarteet!',
 	next: 'Seuraava',
-	treasureFound: 'Aarre kerätty!',
+	treasureFound: 'Vautsi!',
 	streakDays: 'päivän putki',
 	backToMap: 'Takaisin kartalle',
 

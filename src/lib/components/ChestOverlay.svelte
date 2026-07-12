@@ -122,7 +122,10 @@
 
 		// Every tap can raise the loot multiplier
 		const r = Math.random();
-		const steps = r < UPGRADE_TWO ? 2 : r < UPGRADE_TWO + UPGRADE_ONE ? 1 : 0;
+		let steps = r < UPGRADE_TWO ? 2 : r < UPGRADE_TWO + UPGRADE_ONE ? 1 : 0;
+		// A chest never opens plain: if nothing upgraded by the last tap,
+		// it grants the guaranteed x2
+		if (tapsDone >= TAPS_TO_OPEN && multiplier === 1 && steps === 0) steps = 1;
 		if (steps > 0 && multiplier < MAX_MULT) {
 			multiplier = Math.min(MAX_MULT, multiplier + steps);
 			multPopKey += 1;

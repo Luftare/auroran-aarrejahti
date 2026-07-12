@@ -504,8 +504,9 @@ export type GemGalleryRig = { dispose: () => void };
 /**
  * A single gem, centered — for the chest-opening reward view.
  * In `intro` mode the gem appears as a small black silhouette, spins fast
- * while slowing down and grows to full size over two seconds; the glow is
- * gray in the meantime and the true colors are revealed only at the end.
+ * while slowing down and grows to full size; the glow is gray in the
+ * meantime. When the true colors are revealed at the end, the gem bounces
+ * with a damped spring, as if it just landed on the stage.
  */
 export function createGemView(
 	canvas: HTMLCanvasElement,
@@ -528,11 +529,18 @@ export function createGemView(
 	scene.add(gem.group);
 
 	// Intro: stash the original colors so they can be restored at the end
-	const INTRO_DUR = 2;
+	const INTRO_DUR = 1.6;
 	const INTRO_SPIN = 22; // rad/s at the start, decelerates to zero
+	// Spring bounce at the color reveal: overshoot amplitude, damping (1/s)
+	// and oscillation frequency (rad/s); settled once the envelope has died out
+	const SPRING_AMP = 0.32;
+	const SPRING_DAMP = 5.5;
+	const SPRING_FREQ = 16;
+	const SPRING_DUR = 0.9;
 	let introDone = !opts.intro;
 	let startT: number | null = null;
 	const originals: { mat: MeshStandardMaterial; color: number; emissive: number }[] = [];
+	const spriteOriginals: { mat: SpriteMaterial; color: number }[] = [];
 	if (opts.intro) {
 		gem.group.traverse((obj) => {
 			if (obj instanceof Mesh) {
@@ -542,6 +550,9 @@ export function createGemView(
 					color: mat.color.getHex(),
 					emissive: mat.emissive ? mat.emissive.getHex() : 0
 				});
+			} else if (obj instanceof Sprite) {
+				const mat = obj.material as SpriteMaterial;
+				spriteOriginals.push({ mat, color: mat.color.getHex() });
 			}
 		});
 	}
@@ -567,13 +578,23 @@ export function createGemView(
 				}
 			});
 		} else {
-			// The colors are revealed: restore the original materials
+			// The colors are revealed: restore the original materials,
+			// including the glow halo the intro tinted gray
 			for (const o of originals) {
 				o.mat.color.setHex(o.color);
 				o.mat.emissive?.setHex(o.emissive);
 			}
-			gem.group.scale.setScalar(1);
-			introDone = true;
+			for (const o of spriteOriginals) o.mat.color.setHex(o.color);
+			// Spring bounce: the scale overshoots and oscillates back to rest
+			const ts = te - INTRO_DUR;
+			if (ts < SPRING_DUR) {
+				gem.group.scale.setScalar(
+					1 + SPRING_AMP * Math.exp(-SPRING_DAMP * ts) * Math.sin(SPRING_FREQ * ts)
+				);
+			} else {
+				gem.group.scale.setScalar(1);
+				introDone = true;
+			}
 		}
 	}
 

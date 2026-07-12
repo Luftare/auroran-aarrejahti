@@ -32,12 +32,12 @@ export type CollectResult = { firstToday: boolean; loot: Loot };
  * the rarest 0.1%. They sum to 1.
  */
 const DROP_RATES: [GemKind, number][] = [
-	['harmaa', 0.55],
-	['vihrea', 0.25],
-	['sininen', 0.12],
-	['violetti', 0.054],
+	['harmaa', 0.4],
+	['vihrea', 0.3],
+	['sininen', 0.1],
+	['violetti', 0.05],
 	['oranssi', 0.025],
-	['punainen', 0.001]
+	['punainen', 0.005]
 ];
 
 export function rollGem(): GemKind {

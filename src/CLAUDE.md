@@ -101,7 +101,8 @@ Allowed exceptions — functionality, not decoration:
   The model is built in code — no downloadable model files, so the release stays
   static. Animations (shake, lid opening) go through the rig's `tap()`/`open()` calls.
 - Opening sequence: every tap shakes the camera, spins the chest and may raise the
-  loot multiplier (x1–x5; +1 level 20 %, +2 levels 5 % per tap) — the background
+  loot multiplier (x1–x5; +1 level 20 %, +2 levels 5 % per tap; if nothing has
+  upgraded by the last tap it grants a guaranteed x2) — the background
   changes color by level (black → green → blue → purple → orange) and ×N pops in.
   After three taps, "Näytä aarteet!" starts the dive into the keyhole; the loot
   emerges from the darkness. Each multiplier's gem is rolled separately (`rollLoot`)
