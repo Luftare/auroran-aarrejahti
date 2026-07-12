@@ -6,6 +6,7 @@ export const fi = {
 	// Onboarding — the story and instructions, one spoonful at a time
 	onboardingLead: 'Aloita koko perheen hauska aarrejahti. Joka päivä uudet aarteet.',
 	onboardingStart: 'Aloita',
+	onboardingStamp: 'Kehitetty Järvenperässä',
 	onboardingStoryTitle: 'Auroran salaisuus',
 	onboardingStory1:
 		'Joka yö Aurora kätkee uusia aarteita vanhoille kotikulmilleen Järvenperään.',

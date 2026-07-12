@@ -57,6 +57,12 @@
 </script>
 
 <div class="overlay">
+	{#if step === 0}
+		<!-- "Kehitetty Järvenperässä" stamp in the corner of the front page;
+		     the image is the stamp's text, so the alt carries it -->
+		<img class="stamp" src="/leima.webp" alt={fi.onboardingStamp} />
+	{/if}
+
 	<div class="body">
 		{#key step}
 			<section class="step">
@@ -173,6 +179,33 @@
 		display: flex;
 		flex-direction: column;
 		padding-top: calc(1rem + env(safe-area-inset-top));
+	}
+
+	/* The stamp slams into the top-left corner of the front page */
+	.stamp {
+		position: absolute;
+		top: calc(0.6rem + env(safe-area-inset-top));
+		left: 0.8rem;
+		width: 96px;
+		height: auto;
+		z-index: 1;
+		pointer-events: none;
+		animation: stamp-in 0.4s 0.2s ease-out both;
+	}
+
+	@keyframes stamp-in {
+		from {
+			transform: rotate(-12deg) scale(1.9);
+			opacity: 0;
+		}
+		70% {
+			transform: rotate(-12deg) scale(0.93);
+			opacity: 1;
+		}
+		to {
+			transform: rotate(-12deg) scale(1);
+			opacity: 1;
+		}
 	}
 
 	/* The step content scrolls if it must; the footer below never moves */
@@ -301,6 +334,10 @@
 
 		.phone {
 			width: min(38vw, 122px);
+		}
+
+		.stamp {
+			width: 70px;
 		}
 	}
 
