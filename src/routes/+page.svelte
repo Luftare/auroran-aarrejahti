@@ -2,7 +2,17 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { fi } from '$lib/fi';
-	import { game, initGame, collectChest, refreshDay, rollLoot, setLevel } from '$lib/game/state.svelte';
+	import {
+		game,
+		initGame,
+		collectChest,
+		levelStatus,
+		refreshDay,
+		rollLoot,
+		setLevel,
+		type LevelStatus
+	} from '$lib/game/state.svelte';
+	import { LEVELS } from '$lib/game/chests';
 	import { player, startPlayer, stopPlayer, syncPlayer } from '$lib/game/player.svelte';
 	import { geo } from '$lib/client/geo.svelte';
 	import { LOOT_RADIUS_M, type Chest } from '$lib/game/chests';
@@ -12,6 +22,7 @@
 	import ChestOverlay from '$lib/components/ChestOverlay.svelte';
 	import CollectedGems from '$lib/components/CollectedGems.svelte';
 	import GemGallery from '$lib/components/GemGallery.svelte';
+	import LevelComplete from '$lib/components/LevelComplete.svelte';
 	import LevelPicker from '$lib/components/LevelPicker.svelte';
 	import Onboarding from '$lib/components/Onboarding.svelte';
 	import BookOpen from '@lucide/svelte/icons/book-open';
@@ -19,6 +30,7 @@
 	import FlaskConical from '@lucide/svelte/icons/flask-conical';
 	import Gem from '@lucide/svelte/icons/gem';
 	import MapPin from '@lucide/svelte/icons/map-pin';
+	import PartyPopper from '@lucide/svelte/icons/party-popper';
 
 	// New players see the onboarding first; the flag lives in IndexedDB.
 	// Location watching (and its permission prompt) starts only when the
@@ -31,6 +43,14 @@
 	let gemsOpen = $state(false);
 	// Area switcher (opens from the top-center level chip)
 	let levelPickerOpen = $state(false);
+	// Level-complete celebration: queued when the collect empties the level,
+	// shown as the last view once the chest overlay has closed
+	let pendingLevelComplete = false;
+	let levelCompleteStatuses = $state<LevelStatus[] | null>(null);
+	// The level whose row plays the celebration animation
+	let levelCompleteLevel = $state<(typeof LEVELS)[number]>('puutarha');
+	// Debug variant shows a mock state and must not switch the real level
+	let levelCompleteIsDebug = false;
 	// Debug: opens the chest view without walking and does not persist the collection
 	let debugChestOpen = $state(false);
 	// Debug: gem gallery
@@ -65,6 +85,40 @@
 
 	function onchestclick(id: string) {
 		if (id === inRangeChestId) openChestId = id;
+	}
+
+	async function collect(multiplier: number) {
+		const result = await collectChest(openChestId!, multiplier);
+		if (result.levelComplete) pendingLevelComplete = true;
+		return result;
+	}
+
+	// The chest flow ends here; a completed level gets its celebration last
+	function closeChest() {
+		openChestId = null;
+		if (pendingLevelComplete) {
+			pendingLevelComplete = false;
+			levelCompleteIsDebug = false;
+			levelCompleteLevel = game.level;
+			levelCompleteStatuses = levelStatus();
+		}
+	}
+
+	function pickNextLevel(level: (typeof LEVELS)[number]) {
+		if (!levelCompleteIsDebug) void setLevel(level);
+		levelCompleteStatuses = null;
+	}
+
+	// Debug: the celebration with two levels completed and one still open;
+	// the second one plays the just-completed animation
+	function debugLevelComplete() {
+		levelCompleteIsDebug = true;
+		levelCompleteLevel = LEVELS[1];
+		levelCompleteStatuses = LEVELS.map((level, i) => ({
+			level,
+			playable: true,
+			complete: i < LEVELS.length - 1
+		}));
 	}
 
 	function onVisible() {
@@ -188,18 +242,27 @@
 		<button class="debug-btn onboarding" onclick={replayOnboarding} aria-label={fi.debugOnboarding}>
 			<BookOpen size={18} />
 		</button>
+
+		<!-- Debug: level-complete celebration (two areas done, one open) -->
+		<button
+			class="debug-btn level-complete"
+			onclick={debugLevelComplete}
+			aria-label={fi.debugLevelComplete}
+		>
+			<PartyPopper size={18} />
+		</button>
 	{/if}
 
 	{#if openChestId}
-		<ChestOverlay
-			streak={game.streak}
-			oncollect={(multiplier) => collectChest(openChestId!, multiplier)}
-			onback={() => (openChestId = null)}
-		/>
+		<ChestOverlay streak={game.streak} oncollect={collect} onback={closeChest} />
 	{:else if debugChestOpen}
 		<ChestOverlay
 			streak={game.streak || 1}
-			oncollect={async (multiplier) => ({ firstToday: true, loot: rollLoot(multiplier) })}
+			oncollect={async (multiplier) => ({
+				firstToday: true,
+				loot: rollLoot(multiplier),
+				levelComplete: false
+			})}
 			onback={() => (debugChestOpen = false)}
 		/>
 	{/if}
@@ -213,6 +276,15 @@
 			level={game.level}
 			onselect={(l) => void setLevel(l)}
 			onclose={() => (levelPickerOpen = false)}
+		/>
+	{/if}
+
+	{#if levelCompleteStatuses}
+		<LevelComplete
+			statuses={levelCompleteStatuses}
+			completedLevel={levelCompleteLevel}
+			onpick={pickNextLevel}
+			onclose={() => (levelCompleteStatuses = null)}
 		/>
 	{/if}
 
@@ -296,6 +368,10 @@
 
 	.debug-btn.onboarding {
 		bottom: calc(14.6rem + env(safe-area-inset-bottom));
+	}
+
+	.debug-btn.level-complete {
+		bottom: calc(17.8rem + env(safe-area-inset-bottom));
 	}
 
 	/* A dark ring separates the button from the light map base */

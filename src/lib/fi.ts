@@ -44,6 +44,12 @@ export const fi = {
 	} as Record<string, string>,
 	chooseArea: 'Valitse alue',
 
+	// Level completed: celebration and moving to the next area
+	levelCompleteTitle: 'Kaikki aarteet löydetty!',
+	allLevelsDoneTitle: 'Uskomatonta!',
+	allLevelsDoneBody:
+		'Löysit tänään kaikkien alueiden kaikki aarteet. Uudet aarteet ilmestyvät keskiyöllä.',
+
 	// Map
 	distanceToNearest: (dist: string) => `Lähin aarre on ${dist} päässä. Kävele lähemmäs!`,
 	openTreasure: 'Avaa arkku!',
@@ -73,6 +79,7 @@ export const fi = {
 	debugChest: 'Kokeile arkun avausta (debug)',
 	debugGems: 'Näytä jalokivet (debug)',
 	debugOnboarding: 'Käynnistä perehdytys uudelleen (debug)',
+	debugLevelComplete: 'Näytä alueen läpäisy (debug)',
 	close: 'Sulje',
 
 	// Chest-slot editor

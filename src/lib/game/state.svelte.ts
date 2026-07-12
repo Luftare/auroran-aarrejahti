@@ -36,7 +36,15 @@ const EMPTY: Persisted = {
 };
 
 export type Loot = Partial<Record<GemKind, number>>;
-export type CollectResult = { firstToday: boolean; loot: Loot };
+export type CollectResult = {
+	firstToday: boolean;
+	loot: Loot;
+	/** True when this collection was the last chest of the current level today. */
+	levelComplete: boolean;
+};
+
+/** Today's completion state of one level, for the level-complete view. */
+export type LevelStatus = { level: LevelId; complete: boolean; playable: boolean };
 
 /**
  * Drop probabilities by rarity — the most common over half,
@@ -158,7 +166,7 @@ export async function collectChest(id: string, multiplier = 1): Promise<CollectR
 	const count = Math.max(1, Math.min(5, Math.round(multiplier)));
 	const loot = rollLoot(count);
 	const chest = game.chests.find((c) => c.id === id);
-	if (!chest || chest.looted) return { firstToday: false, loot };
+	if (!chest || chest.looted) return { firstToday: false, loot, levelComplete: false };
 
 	const today = game.day;
 	chest.looted = true;
@@ -181,5 +189,19 @@ export async function collectChest(id: string, multiplier = 1): Promise<CollectR
 	game.total = persisted.totalCollected;
 	game.gems = { ...persisted.gems };
 	await persist();
-	return { firstToday, loot };
+	return { firstToday, loot, levelComplete: game.chests.every((c) => c.looted) };
+}
+
+/** Today's completion state of every level: a level is complete when all of
+ *  its daily chests are looted. Layers without marks are not playable. */
+export function levelStatus(): LevelStatus[] {
+	const lootedSet = new Set(persisted.lootedByDay[game.day] ?? []);
+	return LEVELS.map((level) => {
+		const slots = dailySlots(game.day, level);
+		return {
+			level,
+			playable: slots.length > 0,
+			complete: slots.length > 0 && slots.every((s) => lootedSet.has(s.id))
+		};
+	});
 }

@@ -182,9 +182,10 @@
 					<p class="muted">{fi.onboardingStory2}</p>
 				{:else if step === 2}
 					<h2>{fi.onboardingHowTitle}</h2>
+					<!-- All list icons share one color (see also LevelOptions) -->
 					<div class="how">
 						<div class="how-row">
-							<span class="how-icon"><MapIcon size={20} color="var(--aurora-teal)" /></span>
+							<span class="how-icon"><MapIcon size={20} color="var(--aurora-green)" /></span>
 							{fi.onboardingHowMap}
 						</div>
 						<div class="how-row">
@@ -192,7 +193,7 @@
 							{fi.onboardingHowWalk}
 						</div>
 						<div class="how-row">
-							<span class="how-icon"><MoonStar size={20} color="var(--aurora-violet)" /></span>
+							<span class="how-icon"><MoonStar size={20} color="var(--aurora-green)" /></span>
 							{fi.onboardingHowMidnight}
 						</div>
 					</div>

@@ -145,8 +145,20 @@ Allowed exceptions — functionality, not decoration:
   marker (see `.chest-thumb-face`).
 - The WASD debug walk (`src/lib/game/player.svelte.ts`) bypasses GPS for dev
   testing (50 m/s). Don't break it — it is the only way to test the game on a desktop.
+- When the last of a level's daily chests is collected, the chest flow ends in
+  a level-complete celebration (`LevelComplete.svelte`): celebrating Aurora
+  (`static/aurora-juhlii.webp`, a cutout of a raw AI image) on top, only the
+  title "Kaikki aarteet löydetty!", and the level list where the
+  just-completed row plays a juiced animation (winds up with a shrinking
+  shake, blossoms open with an overshoot, and gets its tick with a confetti
+  burst — see `celebrate` in `LevelOptions.svelte`). Completed levels are
+  ticked and disabled. When every level is done, the title/body switch to
+  congratulations and the note that new chests appear at midnight.
+- List-row icons (onboarding how-to, area rows) all share one color,
+  `--aurora-green`.
 - Debug buttons (chest-opening test, gem gallery, slot-editor link, onboarding
-  replay) are hidden unless the page is opened with the `?debug` query param.
+  replay, level-complete example with two areas done) are hidden unless the
+  page is opened with the `?debug` query param.
 - The chest-slot editor `/editori` writes locations into the repository one
   level (layer) at a time: tabs switch the edited layer, each layer keeps its
   own draft, and the slot-editor plugin in vite.config.ts answers POST
