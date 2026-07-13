@@ -9,6 +9,7 @@
 	import { compassSupported, requestCompass } from '$lib/client/compass.svelte';
 	import { defaultLevel, LEVELS, SLOTS_BY_LEVEL, type LevelId } from '$lib/game/chests';
 	import AreaPreviewMap from './AreaPreviewMap.svelte';
+	import Faq from './Faq.svelte';
 	import { LEVEL_ICONS } from './levelIcons';
 	import Compass from '@lucide/svelte/icons/compass';
 	import Flame from '@lucide/svelte/icons/flame';
@@ -38,6 +39,9 @@
 	// marks cannot be toggled). Toggling only moves the preview camera —
 	// the level is applied when the "Valitse <name>" CTA confirms it.
 	let chosenLevel = $state<LevelId>(defaultLevel());
+
+	// FAQ behind the front page's "Lue lisää" link
+	let faqOpen = $state(false);
 
 	// The location step waits for the permission result: the game cannot run
 	// without it, so a failure only offers a retry. Once granted, the flow
@@ -144,7 +148,11 @@
 						</div>
 					</div>
 
-					<p class="lead">{fi.onboardingLead}</p>
+					<p class="lead">
+						{fi.onboardingLead}
+						<!-- FAQ opens from a link at the end of the lead -->
+						<button class="read-more" onclick={() => (faqOpen = true)}>{fi.readMore}</button>
+					</p>
 				{:else if step === 1}
 					<!-- The guide: Aurora reading her map, three numbered steps and
 					     the note that locations change daily -->
@@ -210,6 +218,10 @@
 			{/each}
 		</div>
 	</div>
+
+	{#if faqOpen}
+		<Faq onclose={() => (faqOpen = false)} />
+	{/if}
 </div>
 
 <style>
@@ -221,6 +233,17 @@
 		display: flex;
 		flex-direction: column;
 		padding-top: calc(1rem + env(safe-area-inset-top));
+	}
+
+	/* FAQ link at the end of the lead text. The underline is link
+	   semantics, not decoration. */
+	.read-more {
+		display: inline;
+		padding: 0;
+		font-size: 0.95em;
+		font-weight: 600;
+		color: var(--muted);
+		text-decoration: underline;
 	}
 
 	/* The step content scrolls if it must; the footer below never moves */

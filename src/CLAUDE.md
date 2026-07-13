@@ -67,6 +67,9 @@ Allowed exceptions — functionality, not decoration:
 
 ## Game view
 
+- The "Lue lisää" link at the end of the front page's lead text opens the FAQ
+  (`Faq.svelte`, content in `fi.faq`); its "Selvä" CTA returns to the front
+  page.
 - Onboarding (`Onboarding.svelte`): new players get a five-step flow before the
   map — landing view (a CSS mock phone showing the game at a glance), a guide
   page (Aurora reading her map: `static/aurora-kartta.webp`, three numbered

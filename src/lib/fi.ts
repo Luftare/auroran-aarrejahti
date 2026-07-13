@@ -6,6 +6,75 @@ export const fi = {
 	// Onboarding — the story and instructions, one spoonful at a time
 	onboardingLead: 'Aloita koko perheen hauska aarrejahti Träskändan kartanon kulmilla!',
 	onboardingStart: 'Aloita',
+	readMore: 'Lue lisää',
+	faqClose: 'Selvä',
+	/** FAQ behind the front page's "Lue lisää" link. */
+	faq: [
+		{
+			q: 'Mikä tämä on?',
+			a: [
+				'Auroran aarrejahti on koko perheen seikkailupeli, jota pelataan Träskändan luonnon kauniissa puistossa ja sen lähiympäristössä.',
+				'Pelissä etsitään kartalle merkittyjä aarrearkkuja, joista paljastuu erilaisia jalokiviä.',
+				'Valittavissa on kolme eri aluetta. Pienin alue, "puutarha", sopii perheen pienimmille. "Seutu" alue tarjoaa reippaan kävelyretken varttuneemmille pelaajille.',
+				'Joka yö piilotetaan uudet aarteet. Suunnittele päivän kävelyreitti aarteiden sijaintien innoittamana!'
+			]
+		},
+		{ q: 'Maksaako pelaaminen?', a: ['Ei. Peli on ilmainen.'] },
+		{
+			q: 'Mitä pelin pelaamista varten tarvitaan?',
+			a: ['Matkapuhelin, jossa on verkkoyhteys.']
+		},
+		{
+			q: 'Mihin sijaintitietoa käytetään?',
+			a: [
+				'Sijaintitietoa käytetään aarteiden paikantamiseen. Sijaintitietoa ei lähetetä minnekään päätelaitteelta.'
+			]
+		},
+		{
+			q: 'Kuka on kehittänyt pelin?',
+			a: [
+				[
+					'Pelin on kehittänyt ',
+					{ label: 'Ilmari Koskinen', href: 'https://www.linkedin.com/in/ilmarikoskinen/' },
+					', Järvenperässä asuva perheen isä.'
+				]
+			]
+		},
+		{
+			q: 'Miksi peli on kehitetty?',
+			a: [
+				'Koska pelien kehittäminen on kivaa. Lisäksi peli voi parhaassa tapauksessa saada ihmisiä liikkumaan enemmän.'
+			]
+		},
+		{
+			q: 'Pitääkö ruutuja tuijottaa myös liikkuessa?',
+			a: [
+				'Pelin pelaamista varten ei tarvitse jatkuvasti tuijottaa puhelinta. Puhelimen voi laittaa huoletta taskuun liikuttaessa aarteiden luo.'
+			]
+		},
+		{
+			q: 'Miten voin lähettää palautetta?',
+			a: ['Palaute on erittäin tervetullutta!'],
+			link: {
+				label: 'Täytä palautelomake',
+				href: 'https://docs.google.com/forms/d/e/1FAIpQLSfrqAiRsyGu0S6dg9HoU-f1SOOzwmyaHUMr0z5lmggwYBeLfQ/viewform?usp=publish-editor'
+			}
+		},
+		{
+			q: 'Haluan osallistua pelin kehittämiseen',
+			a: ['Peli on kehitetty avoimella lähdekoodilla.'],
+			link: {
+				label: 'github.com/Luftare/auroran-aarrejahti',
+				href: 'https://github.com/Luftare/auroran-aarrejahti'
+			}
+		}
+	] as {
+		q: string;
+		/** A paragraph is a plain string, or segments with inline links. */
+		a: (string | (string | { label: string; href: string })[])[];
+		link?: { label: string; href: string };
+	}[],
+
 	onboardingGuideSteps: ['Valitse pelialue', 'Kävele aarrearkkujen luo', 'Kerää arkkujen aarteet'],
 	onboardingGuideNote: 'Aarteiden sijainnit vaihtuvat joka päivä!',
 	onboardingPickLevel: (name: string) => `Valitse ${name}`,
