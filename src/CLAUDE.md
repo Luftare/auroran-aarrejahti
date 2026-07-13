@@ -145,8 +145,10 @@ Allowed exceptions — functionality, not decoration:
   changes color by level (black → green → blue → purple → orange) and ×N pops in.
   After three taps, "Näytä aarteet!" starts the dive into the keyhole; the loot
   emerges from the darkness. Each multiplier's gem is rolled separately (`rollLoot`)
-  and shown one at a time from most common to rarest — best one last. Tapping
-  anywhere (or the CTA) advances. The day's first collection ends in the streak
+  and shown one at a time from most common to rarest — best one last. A random
+  cheer (`fi.cheers`) springs in under the gem exactly when its colors reveal
+  and it bounces (delay = `GEM_INTRO_DUR` from gems3d.ts). Tapping anywhere
+  (or the CTA) advances. The day's first collection ends in the streak
   celebration: a big flame + streak count, a week row of numbered circles (today's
   circle fills with a flame pop and a star/confetti burst). The celebration is
   deliberately a purely mental reward — do not wire it into loot rolls or any

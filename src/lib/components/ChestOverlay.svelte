@@ -1,3 +1,9 @@
+<script lang="ts" module>
+	// Remembers the previous cheer across gems and chest openings, so the
+	// same exclamation never shows twice in a row
+	let lastCheer: string | null = null;
+</script>
+
 <script lang="ts">
 	// Full-screen chest opening: taps shake the view and can raise the
 	// loot multiplier (x1–x5) — the background changes color by level.
@@ -9,7 +15,7 @@
 	import { fi } from '$lib/fi';
 	import type { CollectResult, Loot } from '$lib/game/state.svelte';
 	import { createChest, type ChestRig } from './chest3d';
-	import { createGemView, GEM_ORDER, type GemKind } from './gems3d';
+	import { createGemView, GEM_INTRO_DUR, GEM_ORDER, type GemKind } from './gems3d';
 
 	const TAPS_TO_OPEN = 3;
 	const REWARD_AT_MS = 950; // screen is black when the view switches
@@ -47,6 +53,17 @@
 		GEM_ORDER.flatMap((kind) => Array.from({ length: loot[kind] ?? 0 }, () => kind))
 	);
 	let rewardIndex = $state(0);
+	// A fresh random cheer for every revealed gem — never the same twice
+	// in a row (also across consecutive chest openings)
+	const cheer = $derived.by(() => {
+		void rewardIndex;
+		let pick: string;
+		do {
+			pick = fi.cheers[Math.floor(Math.random() * fi.cheers.length)];
+		} while (pick === lastCheer);
+		lastCheer = pick;
+		return pick;
+	});
 	let tapsDone = $state(0);
 	let multiplier = $state(1);
 	let multPopKey = $state(0); // a new value restarts the pop animation
@@ -189,12 +206,13 @@
 			</div>
 		{/if}
 	{:else if phase === 'reward'}
-		<!-- Loot one gem at a time — tapping anywhere continues -->
+		<!-- Loot one gem at a time — tapping anywhere continues. The cheer pops
+		     in exactly when the gem gets its colors and bounces. -->
 		<button class="reward-view" onclick={advance}>
 			{#key rewardIndex}
 				<canvas class="gem" use:gemview={queue[rewardIndex]}></canvas>
+				<p class="reward" style:animation-delay="{GEM_INTRO_DUR}s">{cheer}</p>
 			{/key}
-			<p class="reward">{fi.treasureFound}</p>
 			{#if queue.length > 1}
 				<div class="tap-dots">
 					{#each queue as _, i}
@@ -542,12 +560,32 @@
 	}
 
 
+	/* The cheer springs in at the gem's color reveal (delay set inline to
+	   GEM_INTRO_DUR) with a bounce matching the gem's own */
 	.reward {
 		font-size: 2rem;
 		font-weight: 800;
 		color: var(--gold);
 		margin: 0;
-		animation: rise 600ms ease-out both;
+		animation: cheer-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+	}
+
+	@keyframes cheer-pop {
+		0% {
+			transform: scale(0) rotate(-8deg);
+			opacity: 0;
+		}
+		60% {
+			transform: scale(1.22) rotate(3deg);
+			opacity: 1;
+		}
+		80% {
+			transform: scale(0.94) rotate(-1deg);
+		}
+		100% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
 	}
 
 	@keyframes rise {

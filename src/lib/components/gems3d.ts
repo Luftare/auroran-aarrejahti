@@ -501,6 +501,10 @@ export function buildGem(kind: GemKind, tex: GemTextures): GemHandle {
 
 export type GemGalleryRig = { dispose: () => void };
 
+/** Intro length (s): the color reveal and the spring bounce land right
+ *  after this — sync celebration effects (e.g. the cheer text) to it. */
+export const GEM_INTRO_DUR = 1.6;
+
 /**
  * A single gem, centered — for the chest-opening reward view.
  * In `intro` mode the gem appears as a small black silhouette, spins fast
@@ -529,7 +533,7 @@ export function createGemView(
 	scene.add(gem.group);
 
 	// Intro: stash the original colors so they can be restored at the end
-	const INTRO_DUR = 1.6;
+	const INTRO_DUR = GEM_INTRO_DUR;
 	const INTRO_SPIN = 22; // rad/s at the start, decelerates to zero
 	// Spring bounce at the color reveal: overshoot amplitude, damping (1/s)
 	// and oscillation frequency (rad/s); settled once the envelope has died out
